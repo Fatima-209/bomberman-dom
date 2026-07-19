@@ -1,7 +1,12 @@
+import { startHttpServer } from "./httpServer.js";
 import { startWebSocketServer } from "./websocket/websocket.js";
 
-const PORT = 8080;
+const HTTP_PORT = 3000;
+const WEBSOCKET_PORT = 8080;
 
-startWebSocketServer(PORT);
+startHttpServer(HTTP_PORT);
+startWebSocketServer(WEBSOCKET_PORT);
 
-console.log("backend listening on ws://localhost:" + PORT);
+console.log(
+    `WebSocket server listening at ws://localhost:${WEBSOCKET_PORT}`,
+);
