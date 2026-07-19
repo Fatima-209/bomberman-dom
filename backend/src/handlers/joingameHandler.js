@@ -103,7 +103,7 @@ export function handleJoin(playerId, ws, message) {
     broadcastPlayerList(state);
 }
 //update player list
-function broadcastPlayerList(state) {
+export function broadcastPlayerList(state) {
     const players = Object.values(state.players).map(
         toPublicPlayer,
     );

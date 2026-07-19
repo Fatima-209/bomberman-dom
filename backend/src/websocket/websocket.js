@@ -2,7 +2,9 @@ import { WebSocketServer } from "ws";
 
 import { MSG } from "../../../shared/events.js";
 import { handleJoin } from "../handlers/joingameHandler.js";
+import { handleDisconnect } from "../handlers/disconnectHandler.js";
 import { addClient, removeClient } from "./hub.js";
+import { getGameState } from "../state/gameState.js";
 
 const ALLOWED_ORIGINS = ["http://localhost:3000"];
 
@@ -56,6 +58,19 @@ export function startWebSocketServer(port) {
                 );
                 return;
             }
+            // game events (move, place-bomb, chat, ...) are only
+            // allowed once this connection has completed nickname entry
+            if (
+                message.type !== MSG.JOIN &&
+                !getGameState().players[playerId]
+            ) {
+                console.warn(
+                    `Rejected "${message.type}" from ${playerId}: ` +
+                    `nickname not set yet`,
+                );
+                return;
+            }
+
 //only added join, need to add other event types move place bomb etc
             switch (message.type) {
                 case MSG.JOIN:
@@ -72,6 +87,7 @@ export function startWebSocketServer(port) {
 
         ws.on("close", () => {
             removeClient(playerId);
+            handleDisconnect(playerId);
 
             console.log(`Client disconnected: ${playerId}`);
         });

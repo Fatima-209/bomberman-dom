@@ -1,0 +1,113 @@
+Bomberman-DOM — Change Log
+===========================
+
+2026-07-19 — Stage 1.2 WebSocket Server Core: completed
+
+What was missing:
+  Per the project task breakdown (Stage 1.2 - WebSocket Server Core), one
+  requirement was still open:
+    "A client cannot send game events before completing nickname entry."
+  Connection handling, player ID assignment, broadcast-to-all /
+  broadcast-except-sender helpers, and malformed-message handling were
+  already in place.
+
+What changed:
+  File: backend/src/websocket/websocket.js
+    - Imported getGameState from ../state/gameState.js.
+    - Added a guard in the "message" handler, right after the existing
+      malformed-message check: any message whose type is not MSG.JOIN is
+      now rejected (logged and dropped) unless the sending playerId
+      already exists in state.players — i.e. unless that connection has
+      completed nickname entry via handleJoin().
+    - JOIN itself is exempt from the gate, since it's the message that
+      creates the player entry in the first place.
+
+Why this approach:
+  - Reuses the same state.players[playerId] check that
+    joingameHandler.js already uses to detect a completed join — no new
+    "has this player joined" tracking was introduced.
+  - Placed at the dispatch level (websocket.js) rather than inside
+    individual handlers, so future handlers (move, place-bomb,
+    chat-message) automatically get this protection without each one
+    re-implementing the check.
+  - Matches the existing style/pattern of the malformed-message guard
+    directly above it (log a warning, return early).
+
+Verified:
+  - node --check backend/src/websocket/websocket.js passes.
+  - npm install + node backend/src/index.js boots both the HTTP and
+    WebSocket servers with no errors.
+  - Existing JOIN flow (nickname entry -> JOINED / PLAYER_LIST_UPDATE)
+    is unaffected, since JOIN is exempted from the new gate.
+
+---------------------------------------------------------------
+
+2026-07-19 — Stage 1.3 Disconnect Handling: completed
+
+What was missing:
+  ws.on("close") only removed the socket from the connection hub. It did
+  not remove the player from gameState.players, did not broadcast the
+  updated player list, and had no branching between a lobby-phase and a
+  mid-game disconnect.
+
+What changed:
+  File: backend/src/handlers/disconnectHandler.js (new)
+    - handleDisconnect(playerId): looks up the player in game state and
+      branches on state.phase.
+    - No-op if the player never completed JOIN, or if the game is
+      already GAME_PHASE.GAME_OVER.
+    - LOBBY / COUNTDOWN phase: deletes the player from state.players
+      outright, then broadcasts the updated list via
+      broadcastPlayerList(). If fewer than 2 players remain, resets
+      state.lobby.waitSecondsRemaining / countdownSecondsRemaining to
+      null, with a TODO marking where Stage 1.4's actual timer
+      cancellation will hook in once those timers exist.
+    - PLAYING phase (mid-game): keeps the player entry but sets
+      player.connected = false (so future win-condition checks can
+      still see who's connected/out), then broadcasts the updated list.
+      Computes activePlayers = connected && !isOut; if
+      activePlayers.length <= 1, leaves a TODO for Stage 3.3's shared
+      win-condition function (1 -> that player wins immediately, 0 -> no
+      winner). Not implemented yet since that function doesn't exist
+      until Stage 3.3.
+
+  File: backend/src/handlers/joingameHandler.js
+    - Exported broadcastPlayerList (was module-private) so
+      disconnectHandler.js can reuse the exact same
+      player-list-broadcast logic instead of duplicating it.
+
+  File: backend/src/websocket/websocket.js
+    - Imported handleDisconnect and call it from ws.on("close"), right
+      after removeClient(playerId).
+
+Why this approach:
+  - Reused broadcastPlayerList rather than writing a second version, so
+    there's one source of truth for what a "public player list" looks
+    like on the wire.
+  - Mid-game disconnects mark the player disconnected instead of
+    deleting them, per the doc's requirement that win-condition checks
+    must be based on "connected AND lives > 0" — deleting would lose
+    that player's lives/isOut history mid-match.
+  - Left explicit TODO comments (not silent gaps) for the two pieces
+    that depend on stages not built yet: Stage 1.4's timers and Stage
+    3.3's win-condition function. Matches the doc's team-workflow note
+    to build against stubs for the next stage rather than block on it.
+
+Verified:
+  - node --check on all three touched/new files passes.
+  - npm install + node backend/src/index.js boots cleanly.
+  - Manual two-client test (Alice, Bob join; Alice's socket closes):
+    Bob received a player-list-update with Alice removed and the count
+    dropped from 2 to 1, confirming the lobby-phase branch works
+    end-to-end.
+
+Status update (Stage 1 — Lobby & Connection):
+  1.1 Nickname Entry        - done
+  1.2 WebSocket Server Core - done
+  1.3 Disconnect Handling   - done (mid-game win-condition trigger is a
+                               documented TODO pending Stage 3.3)
+  1.4 Waiting Room & Timers - not started (no 20s window, no 10s
+                               countdown, no server-driven countdown
+                               broadcast)
+
+Next up: Stage 1.4 Waiting Room & Timers.
