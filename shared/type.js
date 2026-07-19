@@ -16,3 +16,11 @@ export const POWER_UP_TYPE = Object.freeze({
     FLAMES: "flames",
     SPEED: "speed",
 });
+
+export const GAME_RULES = Object.freeze({
+    MAX_PLAYERS: 4,
+    MAX_NICKNAME_LENGTH: 16,
+    STARTING_LIVES: 3,
+    STARTING_MAX_BOMBS: 1,
+    STARTING_FLAME_RANGE: 1,
+});

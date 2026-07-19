@@ -1,4 +1,5 @@
 let socket = null;
+const messageListeners = [];
 
 export function connect(serverUrl) {
     socket = new WebSocket(serverUrl);
@@ -8,7 +9,11 @@ export function connect(serverUrl) {
     };
 
     socket.onclose = (event) => {
-        console.log("disconnected:", event.code, event.reason);
+        console.log(
+            "disconnected:",
+            event.code,
+            event.reason,
+        );
     };
 
     socket.onerror = (error) => {
@@ -16,18 +21,46 @@ export function connect(serverUrl) {
     };
 
     socket.onmessage = (event) => {
-        const message = JSON.parse(event.data);
+        let message;
+
+        try {
+            message = JSON.parse(event.data);
+        } catch {
+            console.error(
+                "Received invalid JSON from the server.",
+            );
+            return;
+        }
+
         console.log("received:", message);
+//now every listener runs the message
+        for (const listener of messageListeners) {
+            listener(message);
+        }
     };
 
     return socket;
 }
 
 export function send(message) {
-    if (!socket || socket.readyState !== WebSocket.OPEN) {
-        console.error("tried to send before connection was open:", message);
+    if (
+        !socket ||
+        socket.readyState !== WebSocket.OPEN
+    ) {
+        console.error(
+            "Tried to send before connection was open:",
+            message,
+        );
         return;
     }
 
     socket.send(JSON.stringify(message));
+}
+//adds function to the list of functions that should run whenever the server sends something
+export function onMessage(listener) {
+    if (typeof listener !== "function") {
+        return;
+    }
+
+    messageListeners.push(listener);
 }

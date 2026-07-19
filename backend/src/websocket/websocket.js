@@ -1,13 +1,13 @@
 import { WebSocketServer } from "ws";
-import { addClient, removeClient, broadcast } from "./hub.js";
 
-// Update this to match whatever port your frontend is actually served
-// on. Check your terminal when you run the frontend's dev server —
-// it prints the real port, which is not always the one you expect.
+import { MSG } from "../../../shared/events.js";
+import { handleJoin } from "../handlers/joingameHandler.js";
+import { addClient, removeClient } from "./hub.js";
+
 const ALLOWED_ORIGINS = ["http://localhost:3000"];
 
 export function startWebSocketServer(port) {
-    const wss = new WebSocketServer({ port: port });
+    const wss = new WebSocketServer({ port });
 
     wss.on("connection", (ws, request) => {
         const origin = request.headers.origin;
@@ -17,12 +17,18 @@ export function startWebSocketServer(port) {
             return;
         }
 
-        // placeholder id until Stage 1.1 (nickname entry) assigns a
-        // real one tied to a validated nickname
-        const playerId = "player-" + Date.now() + "-" + Math.floor(Math.random() * 1000);
+        const playerId =
+            "player-" +
+            Date.now() +
+            "-" +
+            Math.floor(Math.random() * 1000);
+
         addClient(playerId, ws);
 
+        console.log(`Client connected: ${playerId}`);
+
         ws.isAlive = true;
+
         ws.on("pong", () => {
             ws.isAlive = true;
         });
@@ -31,44 +37,86 @@ export function startWebSocketServer(port) {
             let message;
 
             try {
-                message = JSON.parse(data);
+                message = JSON.parse(data.toString());
             } catch {
-                ws.send(JSON.stringify({ error: "Invalid JSON" }));
+                console.warn(
+                    `Invalid JSON received from ${playerId}`,
+                );
                 return;
             }
-//replace with validated message routing later
-            broadcast(message, playerId);
+
+            if (
+                message === null ||
+                typeof message !== "object" ||
+                Array.isArray(message) ||
+                typeof message.type !== "string"
+            ) {
+                console.warn(
+                    `Invalid message received from ${playerId}`,
+                );
+                return;
+            }
+//only added join, need to add other event types move place bomb etc
+            switch (message.type) {
+                case MSG.JOIN:
+                    handleJoin(playerId, ws, message);
+                    break;
+
+                default:
+                    console.warn(
+                        `Unknown message type "${message.type}" ` +
+                        `received from ${playerId}`,
+                    );
+            }
         });
 
         ws.on("close", () => {
             removeClient(playerId);
+
+            console.log(`Client disconnected: ${playerId}`);
         });
 
-        ws.on("error", (err) => {
-            console.error("Client error:", err.message);
+        ws.on("error", (error) => {
+            console.error(
+                `Client error for ${playerId}:`,
+                error.message,
+            );
         });
     });
 
-    // ping/pong dead-connection cleanup — checks every client, does
-    // NOT stop checking the rest just because one was dead
+    wss.on("error", (error) => {
+        console.error(
+            "WebSocket server error:",
+            error.message,
+        );
+    });
+
     const interval = setInterval(() => {
         for (const ws of wss.clients) {
             if (!ws.isAlive) {
                 ws.terminate();
                 continue;
             }
+
             ws.isAlive = false;
             ws.ping();
         }
     }, 30000);
 
-    process.on("SIGTERM", () => {
+    function shutdown() {
         clearInterval(interval);
+
         for (const ws of wss.clients) {
             ws.close(1001, "Server shutting down");
         }
-        wss.close(() => process.exit(0));
-    });
+
+        wss.close(() => {
+            console.log("WebSocket server stopped");
+        });
+    }
+
+    process.once("SIGINT", shutdown);
+    process.once("SIGTERM", shutdown);
 
     return wss;
 }

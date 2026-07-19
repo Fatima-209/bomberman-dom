@@ -1,107 +1,83 @@
-// import { connect } from "./network/socket.js";
-
-// connect("ws://localhost:8080");
+import { render } from "./framework/index.js";
 
 import {
-    createElement,
-    render,
-    goToPath,
-    startRouter,
-} from "./framework/index.js";
+    createNicknameScreen,
+    MAX_NICKNAME_LENGTH,
+} from "./app/screens/nameenterScreen.js";
 
-import { connect } from "./network/socket.js";
+import { createLobbyScreen } from "./app/screens/lobbyScreen.js";
+
+import {
+    connect,
+    send,
+    onMessage,
+} from "./network/socket.js";
+
+import {
+    handleServerMessage,
+} from "./network/serverMessageHandler.js";
+
 import { gameStore } from "./state/gameStore.js";
+import { MSG } from "../shared/events.js";
 
 const appContainer = document.getElementById("app");
 
 if (!appContainer) {
-    throw new Error('Element with id="app" was not found.');
-}
-
-let currentPath = "#/";
-
-function createAppScreen(state) {
-    const clickCount = state.testClickCount || 0;
-
-    return createElement(
-        "main",
-        {},
-
-        createElement(
-            "h1",
-            {},
-            "Bomberman-DOM",
-        ),
-
-        createElement(
-            "p",
-            {},
-            "Framework foundation test",
-        ),
-
-        createElement(
-            "p",
-            {},
-            `Current route: ${currentPath}`,
-        ),
-
-        createElement(
-            "p",
-            {},
-            `WebSocket status: ${state.connectionStatus}`,
-        ),
-
-        createElement(
-            "p",
-            {},
-            `Button clicked: ${clickCount} times`,
-        ),
-
-        createElement(
-            "button",
-            {
-                type: "button",
-
-                onClick: () => {
-                    gameStore.setState({
-                        testClickCount: clickCount + 1,
-                    });
-                },
-            },
-            "Test framework event",
-        ),
-
-        createElement(
-            "button",
-            {
-                type: "button",
-
-                onClick: () => {
-                    if (currentPath === "#/") {
-                        goToPath("#/test");
-                    } else {
-                        goToPath("#/");
-                    }
-                },
-            },
-            "Change route",
-        ),
+    throw new Error(
+        'Element with id="app" was not found.',
     );
 }
+//cleans up and validates nickname
+function handleNicknameSubmit(rawNickname) {
+    const nickname = rawNickname.trim();
 
+    if (nickname.length === 0) {
+        gameStore.setState({
+            nicknameInput: rawNickname,
+            joinError: "Please enter a nickname.",
+        });
+
+        return;
+    }
+
+    if (nickname.length > MAX_NICKNAME_LENGTH) {
+        gameStore.setState({
+            nicknameInput: rawNickname,
+            joinError:
+                `Nickname must be ${MAX_NICKNAME_LENGTH} ` +
+                "characters or fewer.",
+        });
+
+        return;
+    }
+
+    gameStore.setState({
+        nicknameInput: nickname,
+        joinError: "",
+    });
+
+    send({
+        type: MSG.JOIN,
+        nickname,
+    });
+}
+//renders app and choose which screen to display
 function renderApp() {
     const state = gameStore.getState();
-    const screen = createAppScreen(state);
+
+    const screen = state.playerId
+        ? createLobbyScreen(state)
+        : createNicknameScreen(
+              state,
+              handleNicknameSubmit,
+          );
 
     render(screen, appContainer);
 }
 
 gameStore.subscribe(renderApp);
 
-startRouter((path) => {
-    currentPath = path;
-    renderApp();
-});
+onMessage(handleServerMessage);
 
 gameStore.setState({
     connectionStatus: "connecting",
