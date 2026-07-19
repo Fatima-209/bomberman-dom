@@ -2,18 +2,17 @@
   "name": "bomberman-dom",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+"private": true,
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node backend/src/index.js",
+    "dev": "node backend/src/index.js"
   },
   "repository": {
     "type": "git",
     "url": "https://learn.reboot01.com/git/khabdulla/bomberman-dom.git"
   },
-  "keywords": [],
-  "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
     "ws": "^8.21.1"
   }
