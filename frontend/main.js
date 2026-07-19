@@ -1,4 +1,5 @@
-import { render } from "./framework/index.js";
+import { render, createElement } from "./framework/index.js";
+import { GAME_PHASE } from "../shared/gameState.js";
 
 import {
     createNicknameScreen,
@@ -65,14 +66,31 @@ function handleNicknameSubmit(rawNickname) {
 function renderApp() {
     const state = gameStore.getState();
 
-    const screen = state.playerId
-        ? createLobbyScreen(state)
-        : createNicknameScreen(
-              state,
-              handleNicknameSubmit,
-          );
+    const screen =
+        state.phase === GAME_PHASE.PLAYING
+            ? createGameStartedPlaceholder(state)
+            : state.playerId
+              ? createLobbyScreen(state)
+              : createNicknameScreen(
+                    state,
+                    handleNicknameSubmit,
+                );
 
     render(screen, appContainer);
+}
+
+// Stub only - Stage 2 replaces this with real board rendering.
+function createGameStartedPlaceholder(state) {
+    return createElement(
+        "main",
+        { className: "game-screen" },
+        createElement("h1", {}, "Game started!"),
+        createElement(
+            "p",
+            {},
+            `${state.players.length} players in the match.`,
+        ),
+    );
 }
 
 gameStore.subscribe(renderApp);

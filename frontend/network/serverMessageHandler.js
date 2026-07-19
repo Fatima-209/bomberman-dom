@@ -1,4 +1,5 @@
 import { MSG } from "../../shared/events.js";
+import { GAME_PHASE } from "../../shared/gameState.js";
 import { gameStore } from "../state/gameStore.js";
 
 export function handleServerMessage(message) {
@@ -14,6 +15,14 @@ export function handleServerMessage(message) {
 
         case MSG.PLAYER_LIST_UPDATE:
             handlePlayerListMessage(message);
+            break;
+
+        case MSG.COUNTDOWN_TICK:
+            handleCountdownTickMessage(message);
+            break;
+
+        case MSG.GAME_START:
+            handleGameStartMessage(message);
             break;
 
         default:
@@ -59,5 +68,42 @@ function handlePlayerListMessage(message) {
 
     gameStore.setState({
         players,
+    });
+}
+
+function handleCountdownTickMessage(message) {
+    if (message.phase === "cancelled") {
+        gameStore.setState({
+            waitSecondsRemaining: null,
+            countdownSecondsRemaining: null,
+        });
+        return;
+    }
+
+    if (message.phase === "waiting") {
+        gameStore.setState({
+            waitSecondsRemaining: message.secondsRemaining,
+            countdownSecondsRemaining: null,
+        });
+        return;
+    }
+
+    if (message.phase === "starting") {
+        gameStore.setState({
+            waitSecondsRemaining: null,
+            countdownSecondsRemaining: message.secondsRemaining,
+        });
+    }
+}
+
+function handleGameStartMessage(message) {
+    gameStore.setState({
+        phase: GAME_PHASE.PLAYING,
+        waitSecondsRemaining: null,
+        countdownSecondsRemaining: null,
+        map: message.map,
+        players: Array.isArray(message.players)
+            ? message.players
+            : [],
     });
 }

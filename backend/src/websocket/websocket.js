@@ -3,12 +3,13 @@ import { WebSocketServer } from "ws";
 import { MSG } from "../../../shared/events.js";
 import { handleJoin } from "../handlers/joingameHandler.js";
 import { handleDisconnect } from "../handlers/disconnectHandler.js";
+import { onPlayerJoined } from "../handlers/lobbyTimerHandler.js";
 import { addClient, removeClient } from "./hub.js";
 import { getGameState } from "../state/gameState.js";
 
 const ALLOWED_ORIGINS = ["http://localhost:3000"];
 
-export function startWebSocketServer(port) {
+export function startWebSocketServer(port, httpServer) {
     const wss = new WebSocketServer({ port });
 
     wss.on("connection", (ws, request) => {
@@ -73,9 +74,15 @@ export function startWebSocketServer(port) {
 
 //only added join, need to add other event types move place bomb etc
             switch (message.type) {
-                case MSG.JOIN:
-                    handleJoin(playerId, ws, message);
+                case MSG.JOIN: {
+                    const joined = handleJoin(playerId, ws, message);
+
+                    if (joined) {
+                        onPlayerJoined(getGameState());
+                    }
+
                     break;
+                }
 
                 default:
                     console.warn(
@@ -128,6 +135,16 @@ export function startWebSocketServer(port) {
 
         wss.close(() => {
             console.log("WebSocket server stopped");
+
+            if (!httpServer) {
+                process.exit(0);
+                return;
+            }
+
+            httpServer.close(() => {
+                console.log("HTTP server stopped");
+                process.exit(0);
+            });
         });
     }
 

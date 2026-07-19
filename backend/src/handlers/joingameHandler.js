@@ -101,6 +101,8 @@ export function handleJoin(playerId, ws, message) {
     });
 
     broadcastPlayerList(state);
+
+    return true;
 }
 //update player list
 export function broadcastPlayerList(state) {
@@ -116,7 +118,7 @@ export function broadcastPlayerList(state) {
     });
 }
 //contains internal game info & wht is sent to the browsers
-function toPublicPlayer(player) {
+export function toPublicPlayer(player) {
     return {
         id: player.id,
         nickname: player.nickname,

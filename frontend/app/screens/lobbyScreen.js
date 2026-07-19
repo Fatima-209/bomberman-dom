@@ -68,11 +68,25 @@ export function createLobbyScreen(state) {
                 {
                     className: "lobby-message",
                 },
-
-                state.players.length < 2
-                    ? "Waiting for at least one more player..."
-                    : "Enough players have joined. The game will begin soon.",
+                lobbyMessage(state),
             ),
         ),
     );
+}
+
+function lobbyMessage(state) {
+    if (state.countdownSecondsRemaining !== null) {
+        return `Game starting in ${state.countdownSecondsRemaining}...`;
+    }
+
+    if (state.waitSecondsRemaining !== null) {
+        return (
+            `Starting in ${state.waitSecondsRemaining}s ` +
+            "unless more players join sooner..."
+        );
+    }
+
+    return state.players.length < 2
+        ? "Waiting for at least one more player..."
+        : "Enough players have joined. The game will begin soon.";
 }

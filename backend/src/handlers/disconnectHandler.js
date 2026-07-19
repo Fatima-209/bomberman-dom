@@ -2,6 +2,7 @@ import { GAME_PHASE } from "../../../shared/gameState.js";
 
 import { getGameState } from "../state/gameState.js";
 import { broadcastPlayerList } from "./joingameHandler.js";
+import { onPlayerLeft } from "./lobbyTimerHandler.js";
 
 export function handleDisconnect(playerId) {
     const state = getGameState();
@@ -24,15 +25,7 @@ export function handleDisconnect(playerId) {
     if (isLobbyPhase) {
         delete state.players[playerId];
 
-        const remaining = Object.keys(state.players).length;
-
-        if (remaining < 2) {
-            // TODO (Stage 1.4): cancel/reset both lobby timers here once
-            // the 20s wait / 10s countdown timers exist.
-            state.lobby.waitSecondsRemaining = null;
-            state.lobby.countdownSecondsRemaining = null;
-        }
-
+        onPlayerLeft(state);
         broadcastPlayerList(state);
         return;
     }

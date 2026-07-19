@@ -111,3 +111,143 @@ Status update (Stage 1 — Lobby & Connection):
                                broadcast)
 
 Next up: Stage 1.4 Waiting Room & Timers.
+
+---------------------------------------------------------------
+
+2026-07-19 — Stage 1.4 Waiting Room & Timers: completed
+
+What was missing:
+  state.lobby.waitSecondsRemaining / countdownSecondsRemaining existed
+  in the state shape but nothing ever set them. No 20s window, no 10s
+  "get ready" countdown, no countdown-tick broadcast, no game-start
+  broadcast.
+
+What changed:
+  File: shared/type.js
+    - Added GAME_RULES.LOBBY_WAIT_SECONDS (20) and
+      GAME_RULES.COUNTDOWN_SECONDS (10), documented alongside the other
+      game constants rather than hardcoded inline.
+
+  File: backend/src/handlers/lobbyTimerHandler.js (new)
+    - onPlayerJoined(state): starts the 20s wait timer once 2+ players
+      are in state.players; skips straight to the 10s countdown if the
+      4th player joins first.
+    - onPlayerLeft(state): if the remaining player count drops below 2,
+      cancels whichever timer is running, resets state.phase back to
+      LOBBY, and broadcasts a countdown-tick with phase "cancelled" so
+      clients stop showing a stale countdown.
+    - startCountdown() flips state.phase to COUNTDOWN as its first
+      statement and both entry points (natural 20s expiry, 4th player
+      joining) guard on state.phase before doing anything else - this
+      is what prevents the doc's "4th player joins the same instant the
+      20s timer fires" case from starting two countdowns: whichever
+      path runs first wins, the other's guard clause no-ops.
+    - startGame(): flips phase to PLAYING and broadcasts game-start with
+      the current player list. map is sent as null with a TODO (Stage 2
+      generates it) - matches the doc's "build against stubs for the
+      next stage" workflow note.
+    - Timer handles (setInterval ids) are kept as module-local
+      variables, not on state, so they never leak into anything that
+      serializes/broadcasts state.
+
+  File: backend/src/handlers/joingameHandler.js
+    - handleJoin now returns true on a successful join (still falls
+      through to implicit undefined on every rejection path) so the
+      caller knows whether to trigger the timer logic.
+    - Exported toPublicPlayer (was module-private) so
+      lobbyTimerHandler.js's game-start payload reuses the same
+      player-shape logic instead of a second copy.
+
+  File: backend/src/websocket/websocket.js
+    - MSG.JOIN case now calls onPlayerJoined(getGameState()) after a
+      successful handleJoin().
+
+  File: backend/src/handlers/disconnectHandler.js
+    - Lobby-phase branch now calls onPlayerLeft(state) instead of the
+      inline "TODO: reset timers" stub that only touched state fields
+      without ever having real timers to cancel.
+
+  Frontend:
+  File: frontend/network/serverMessageHandler.js
+    - Added cases for countdown-tick (updates
+      waitSecondsRemaining/countdownSecondsRemaining, or clears both on
+      phase "cancelled") and game-start (sets phase to PLAYING, stores
+      map/players).
+  File: frontend/app/screens/lobbyScreen.js
+    - Waiting-room message now reflects the live timer instead of a
+      static "waiting for players" string.
+  File: frontend/main.js
+    - Added a minimal placeholder screen for phase === PLAYING (just
+      confirms the transition happened) - Stage 2 replaces this with
+      real board rendering, not meant to be the final game screen.
+
+Why this approach:
+  - Split "who owns the timers" (lobbyTimerHandler.js) from "who owns
+    the join/disconnect flow" (joingameHandler.js / disconnectHandler.js)
+    to avoid a circular import: lobbyTimerHandler.js imports
+    toPublicPlayer from joingameHandler.js, so joingameHandler.js and
+    disconnectHandler.js call into lobbyTimerHandler.js but it never
+    calls back into them. websocket.js is what wires join -> timer
+    check, keeping the dependency graph one-directional.
+  - No new join-blocking logic was added for the "already in
+    COUNTDOWN" case - the existing phase !== LOBBY gate in
+    joingameHandler.js already rejects it, so a 3rd/4th late join
+    during the 10s countdown is naturally refused with the existing
+    "game has already started" message. Documented here since the
+    subject doesn't say explicitly whether late joins should be
+    allowed mid-countdown; this is the interpretation we went with.
+
+Verified (live server + real ws clients, not just node --check):
+  - Scenario: 4 players join back-to-back -> confirmed zero "waiting"
+    phase ticks were ever sent, countdown broadcast exactly
+    10,9,8,...,1, game-start received by all four with the full player
+    list.
+  - Scenario: 2 players, no others join -> confirmed 20 "waiting" ticks
+    (20 down to 1), immediately followed by 10 "starting" ticks (10
+    down to 1), then game-start. ~31s real-time run.
+  - Scenario: 2 players join (wait timer starts), one disconnects ~3s
+    in -> confirmed a countdown-tick with phase "cancelled" was
+    broadcast, player-list-update dropped to 1, and no further ticks
+    arrived in the following 5s (timer does not silently resume).
+  - node --check on every touched/new file passes.
+
+Status update (Stage 1 — Lobby & Connection): all four sub-stages
+(1.1-1.4) are now done. Stage 1 complete.
+
+Next up: Stage 2 - Map & Movement.
+
+---------------------------------------------------------------
+
+2026-07-19 — Bugfix: dev server didn't fully shut down on Ctrl+C
+
+What was wrong:
+  backend/src/index.js called startHttpServer(HTTP_PORT) without
+  keeping a reference to the returned http.Server. websocket.js's
+  shutdown() (registered on SIGINT/SIGTERM) cleared its ping interval
+  and closed the WebSocket server, but had no way to close the HTTP
+  server and never called process.exit(). Result: pressing Ctrl+C
+  looked like it stopped the app, but the HTTP server kept listening
+  on port 3000 forever and the process never actually exited, so the
+  next `npm run dev` failed with EADDRINUSE until the old process was
+  killed manually.
+
+What changed:
+  File: backend/src/index.js
+    - Captures the http.Server returned by startHttpServer and passes
+      it into startWebSocketServer(port, httpServer).
+  File: backend/src/websocket/websocket.js
+    - startWebSocketServer now accepts httpServer as a second
+      parameter. shutdown() closes httpServer after wss.close()
+      finishes, then calls process.exit(0) so the process actually
+      terminates instead of hanging with an open listener.
+
+Verified:
+  - node --check on both files passes.
+  - Ran the server on alternate ports (3001/8081, to avoid clobbering
+    a real dev session) and triggered process.emit("SIGINT") in-process
+    (OS-level signal delivery isn't reliably testable across the Git
+    Bash/Windows PID boundary - MSYS's $! is not the real Windows PID).
+    Confirmed both "WebSocket server stopped" and "HTTP server stopped"
+    logged, process exited with code 0, and both ports were free
+    immediately after - all before a 4s "still alive" sentinel timer
+    would have fired.

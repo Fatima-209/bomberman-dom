@@ -23,4 +23,6 @@ export const GAME_RULES = Object.freeze({
     STARTING_LIVES: 3,
     STARTING_MAX_BOMBS: 1,
     STARTING_FLAME_RANGE: 1,
+    LOBBY_WAIT_SECONDS: 20,
+    COUNTDOWN_SECONDS: 10,
 });
