@@ -36,7 +36,7 @@ export function startWebSocketServer(port) {
                 ws.send(JSON.stringify({ error: "Invalid JSON" }));
                 return;
             }
-
+//replace with validated message routing later
             broadcast(message, playerId);
         });
 
