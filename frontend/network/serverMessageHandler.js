@@ -1,6 +1,7 @@
 import { MSG } from "../../shared/events.js";
 import { GAME_PHASE } from "../../shared/gameState.js";
 import { gameStore } from "../state/gameStore.js";
+import { startGameLoop } from "../app/game/inputHandler.js";
 
 export function handleServerMessage(message) {
     switch (message.type) {
@@ -25,6 +26,10 @@ export function handleServerMessage(message) {
             handleGameStartMessage(message);
             break;
 
+        case MSG.POSITION_UPDATE:
+            handlePositionUpdateMessage(message);
+            break;
+
         default:
             console.warn(
                 `Unhandled server message: ${message.type}`,
@@ -43,11 +48,18 @@ function handleJoinedMessage(message) {
     }
 
     gameStore.setState({
-        playerId: player.id,
-        nickname: player.nickname,
-        nicknameInput: player.nickname,
-        joinError: "",
+        phase: GAME_PHASE.PLAYING,
+        waitSecondsRemaining: null,
+        countdownSecondsRemaining: null,
+        map: message.map,
+        players: Array.isArray(message.players)
+            ? message.players
+            : [],
     });
+
+    // start the game loop, passes a function so the loop always
+    // reads the current playerId from state rather than a stale value
+    startGameLoop(() => gameStore.getState().playerId);
 }
 
 function handleJoinErrorMessage(message) {
@@ -106,4 +118,18 @@ function handleGameStartMessage(message) {
             ? message.players
             : [],
     });
+}
+
+function handlePositionUpdateMessage(message) {
+    const state = gameStore.getState();
+
+    // find the player in the array and update their position
+    const updatedPlayers = state.players.map((player) => {
+        if (player.id === message.playerId) {
+            return { ...player, position: message.position };
+        }
+        return player;
+    });
+
+    gameStore.setState({ players: updatedPlayers });
 }

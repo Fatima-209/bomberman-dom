@@ -11,6 +11,7 @@ import { handleServerMessage } from "./network/serverMessageHandler.js";
 
 import { gameStore } from "./state/gameStore.js";
 import { MSG } from "../shared/events.js";
+import { startInputListening, startGameLoop, stopGameLoop } from "./app/game/inputHandler.js";
 
 //TEMPORARY — for manually testing state changes from devtools console.
 //remove this line before committing.
@@ -74,28 +75,37 @@ function renderApp() {
     const state = gameStore.getState();
 
     const screen =
-        state.phase === GAME_PHASE.PLAYING
-            ? createGameStartedPlaceholder(state)
-            : state.playerId
-              ? createLobbyScreen(state)
-              : createNicknameScreen(
-                    state,
-                    handleNicknameSubmit,
-                    handleNicknameInput,
-                );
+    state.phase === GAME_PHASE.PLAYING
+        ? createGameScreen(state)
+        : state.playerId
+          ? createLobbyScreen(state)
+          : createNicknameScreen(
+                state,
+                handleNicknameSubmit,
+                handleNicknameInput,
+            );
 
-                if (!hasRenderedOnce){
-                    render(screen, appContainer);
-                    hasRenderedOnce = true;
-                }else{
-                    update(screen);
-                }
+              if (!hasRenderedOnce){
+                render(screen, appContainer);
+                hasRenderedOnce = true;
+            }else{
+                update(screen);
+            }
 }
 
-//game render
+let gameLoopStarted = false;
+
 function createGameStartedPlaceholder(state) {
+    if (!gameLoopStarted) {
+        gameLoopStarted = true;
+        startInputListening();
+        startGameLoop(() => gameStore.getState().playerId);
+    }
+
     return createGameScreen(state);
 }
+
+startInputListening();
 
 gameStore.subscribe(renderApp);
 

@@ -1,7 +1,14 @@
 import { createElement } from "../../framework/index.js";
 import { TILE_TYPE, GAME_RULES } from "../../../shared/type.js";
 
+
 export function createGameScreen(state) {
+    if (!state.map) {
+        return createElement("main", { className: "game-screen" },
+            createElement("p", {}, "Loading..."),
+        );
+    }
+
     return createElement(
         "main",
         { className: "game-screen" },
@@ -72,7 +79,7 @@ function buildPlayerPositionMap(players) {
     const map = {};
 
     players.forEach((player, index) => {
-        if (player.position) {
+        if (player.position && player.connected) {
             const key = player.position.row + "," + player.position.col;
             map[key] = index;
         }

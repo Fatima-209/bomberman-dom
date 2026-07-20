@@ -6,6 +6,7 @@ import { handleDisconnect } from "../handlers/disconnectHandler.js";
 import { onPlayerJoined } from "../handlers/lobbyTimerHandler.js";
 import { addClient, removeClient } from "./hub.js";
 import { getGameState } from "../state/gameState.js";
+import { handleMove } from "../handlers/moveHandler.js";
 
 const ALLOWED_ORIGINS = ["http://localhost:3000"];
 
@@ -81,6 +82,9 @@ export function startWebSocketServer(port, httpServer) {
                         onPlayerJoined(getGameState());
                     }
 
+                    break;
+                } case MSG.MOVE: { 
+                    handleMove(playerId, message, getGameState());
                     break;
                 }
 

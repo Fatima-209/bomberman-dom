@@ -411,3 +411,62 @@ Verified:
     in their assigned spawn corners.
 
 Next up: Stage 2.3 — Movement.
+
+2026-07-20 — Stage 2.3 & 2.4 Movement & Collision: completed
+
+What changed:
+  File: frontend/app/game/inputHandler.js (new)
+    - startInputListening() tracks which keys are currently held
+      using keydown/keyup. Lives in its own module as the input
+      abstraction layer — this is the only place in the project
+      that uses addEventListener for keyboard input, same role
+      as events.js is for DOM events.
+    - startGameLoop() runs a requestAnimationFrame loop that checks
+      held keys every frame but only sends a MOVE message to the
+      server every 150ms (throttled to ~6-7 moves per second).
+    - getDirectionFromKeys() maps arrow keys and WASD to
+      "up"/"down"/"left"/"right".
+
+  File: backend/src/handlers/moveHandler.js (new)
+    - handleMove() is the server-side authority for all movement.
+      Validates the direction, computes the target tile, runs
+      collision checks, and only updates player.position and
+      broadcasts POSITION_UPDATE if the move is valid.
+    - isValidMove() blocks movement into walls, unbroken blocks,
+      out-of-bounds tiles, and tiles occupied by other players.
+      Bomb collision left as a comment for Stage 3.1.
+
+  File: frontend/network/serverMessageHandler.js
+    - Added POSITION_UPDATE case: finds the moved player in
+      state.players, updates their position, calls setState so
+      patch() re-renders only the two changed tiles.
+
+  File: frontend/app/screens/gameScreen.js
+    - buildPlayerPositionMap() now skips players where
+      connected === false, so disconnected players are removed
+      from the board immediately on all clients.
+    - Added null guard for state.map so the game screen renders
+      a loading state instead of crashing if map hasn't arrived yet.
+
+  File: frontend/main.js
+    - startInputListening() and startGameLoop() called once when
+      the game screen first mounts, guarded by gameLoopStarted flag.
+
+  File: backend/src/handlers/joingameHandler.js
+    - Phase check now allows joining during COUNTDOWN as well as
+      LOBBY, so the 4th player can join after the 10s countdown
+      has already started.
+
+  File: backend/src/handlers/lobbyTimerHandler.js
+    - onPlayerJoined() now returns early during COUNTDOWN without
+      touching the timer, so the 4th player joining mid-countdown
+      does not reset it back to 10s.
+
+Verified:
+  - Players move in all 4 directions with arrow keys and WASD.
+  - Collision blocks movement into walls, pillars, blocks, and
+    other players — all validated server-side.
+  - Refreshing a tab removes that player's sprite from the board
+    on all other clients immediately.
+
+Next up: Stage 3.1 — Bombs.
