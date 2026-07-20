@@ -116,17 +116,3 @@ export function generateMap() {
         spawnPoints: SPAWN_CORNERS,
     };
 }
-
-
-const map = generateMap();
-const symbols = { empty: ".", wall: "#", block: "B" };
-const grid = map.tiles;
-
-// mark spawn points so we can see them
-for (const point of map.spawnPoints) {
-    grid[point.row][point.col] = "spawn";
-}
-
-const symbolsWithSpawn = { empty: ".", wall: "#", block: "B", spawn: "S" };
-console.log(grid.map(row => row.map(t => symbolsWithSpawn[t]).join(" ")).join("\n"));
-console.log("\nspawnPoints:", map.spawnPoints);

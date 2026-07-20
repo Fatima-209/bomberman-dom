@@ -376,3 +376,38 @@ Verified:
     confirming server generated once and all clients received it.
 
 Next up: Stage 2.2 — Board Rendering.
+
+2026-07-20 — Stage 2.2 Board Rendering: completed
+
+What changed:
+  File: frontend/app/screens/gameScreen.js (new)
+    - createGameScreen(state) renders the full board using the
+      framework's createElement — no raw document.createElement.
+    - createTiles() loops through state.map.tiles and builds one
+      div per tile with the correct class (floor/wall/block),
+      using CSS background images from Styles/public/.
+    - buildPlayerPositionMap() builds a row,col keyed lookup so
+      createTile() knows whether a player is on that tile and
+      renders their sprite as a child div if so.
+    - Player sprites map to join order: index 0 = player-one.png,
+      index 1 = player-two.png, etc.
+
+  File: frontend/main.js
+    - Replaced createGameStartedPlaceholder stub with a call to
+      createGameScreen(state).
+
+  File: Styles/styles.css
+    - Added .game-board (CSS Grid, 13 columns of 48px),
+      .tile with floor/wall/block background images,
+      and .player for player sprites.
+
+Note: re-rendering only changed tiles is already handled by the
+patch() diffing in render.js from the earlier render fix —
+no extra code needed here.
+
+Verified:
+  - 2-player and 4-player live tests: board renders correctly with
+    wall pattern, pillars, random blocks, and all players placed
+    in their assigned spawn corners.
+
+Next up: Stage 2.3 — Movement.

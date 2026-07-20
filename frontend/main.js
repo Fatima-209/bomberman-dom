@@ -2,8 +2,8 @@ import { render, update, createElement } from "./framework/index.js";
 import { GAME_PHASE } from "../shared/gameState.js";
 
 import { createNicknameScreen, MAX_NICKNAME_LENGTH } from "./app/screens/nameenterScreen.js";
-
 import { createLobbyScreen } from "./app/screens/lobbyScreen.js";
+import { createGameScreen } from "./app/screens/gameScreen.js";
 
 import { connect, send, onMessage } from "./network/socket.js";
 
@@ -92,18 +92,9 @@ function renderApp() {
                 }
 }
 
-// Stub only - Stage 2 replaces this with real board rendering.
+//game render
 function createGameStartedPlaceholder(state) {
-    return createElement(
-        "main",
-        { className: "game-screen" },
-        createElement("h1", {}, "Game started!"),
-        createElement(
-            "p",
-            {},
-            `${state.players.length} players in the match.`,
-        ),
-    );
+    return createGameScreen(state);
 }
 
 gameStore.subscribe(renderApp);

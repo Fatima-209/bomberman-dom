@@ -22,3 +22,35 @@ input {
 #app {
     min-height: 100vh;
 }
+
+.game-board {
+    display: grid;
+    grid-template-columns: repeat(13, 48px);
+    width: fit-content;
+    margin: 20px auto;
+}
+
+.tile {
+    width: 48px;
+    height: 48px;
+    background-size: cover;
+}
+
+.tile.floor {
+    background-image: url("../Styles/public/floor-tile.png");
+}
+
+.tile.wall {
+    background-image: url("../Styles/public/wall-tile.png");
+}
+
+.tile.block {
+    background-image: url("../Styles/public/block-tile.png");
+}
+
+.player {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+}
