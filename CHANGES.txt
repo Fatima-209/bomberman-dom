@@ -337,3 +337,42 @@ Verified:
     confirmed the submit button's disabled attribute is correctly
     added AND removed on each toggle (previously it would only ever
     be added, never removed).
+
+    2026-07-20 — Stage 2.1 Map Generation: completed
+
+What changed:
+  File: shared/type.js
+    - Added MAP_ROWS (11) and MAP_COLS (13) to GAME_RULES as the
+      single source of truth for grid dimensions, used by both the
+      server generator and (later) the frontend renderer.
+
+  File: backend/src/map/mapGenerator.js (new)
+    - generateMap() builds the full tile grid in 4 steps:
+      border walls (outer edge), pillar walls (even-row + even-col
+      interior positions, classic Bomberman pattern), spawn zone
+      clearing (3 open tiles guaranteed per corner so players can
+      always escape a bomb on their spawn tile), then random block
+      placement (60% chance per remaining open tile — not specified
+      in requirements, this is our documented choice).
+    - Returns { rows, cols, tiles, spawnPoints } — everything the
+      client needs to render the board.
+
+  File: backend/src/handlers/lobbyTimerHandler.js
+    - startGame() now calls generateMap(), stores the result on
+      state, and assigns each player a spawn position from
+      state.map.spawnPoints before broadcasting GAME_START.
+      Fills in the TODO left from Stage 1.4.
+
+  File: backend/src/handlers/joingameHandler.js
+    - toPublicPlayer() now includes position so spawn coordinates
+      actually reach clients in the GAME_START payload.
+
+Verified:
+  - 200 randomized runs: border walls always solid, pillar pattern
+    intact, all 4 spawn zones always clear, no block ever on a wall
+    or spawn tile.
+  - Live 4-player test: gameStore.getState().map in browser console
+    returned { rows: 11, cols: 13, tiles: (11), spawnPoints: (4) }
+    confirming server generated once and all clients received it.
+
+Next up: Stage 2.2 — Board Rendering.
