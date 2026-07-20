@@ -1,9 +1,9 @@
 import { GAME_PHASE } from "../../../shared/gameState.js";
 import { GAME_RULES } from "../../../shared/type.js";
 import { MSG } from "../../../shared/events.js";
-
 import { broadcastToAll } from "../websocket/hub.js";
 import { toPublicPlayer } from "./joingameHandler.js";
+import { generateMap } from "../map/mapGenerator.js";
 
 let waitInterval = null;
 let countdownInterval = null;
@@ -103,8 +103,19 @@ function startGame(state) {
     state.phase = GAME_PHASE.PLAYING;
     state.lobby.countdownSecondsRemaining = null;
 
-    // TODO (Stage 2): replace null map with the generated grid and
-    // assign each player's spawn corner/position before this broadcasts.
+    state.map = generateMap();
+
+    //give each player a spawnpoint
+    const players = Object.values(state.players);
+
+    players.forEach((player, index) =>{
+        player.position = {
+            row: state.map.spawnPoints[index].row,
+            col: state.map.spawnPoints[index].col,
+        }
+
+    });
+
     broadcastToAll({
         type: MSG.GAME_START,
         map: state.map,

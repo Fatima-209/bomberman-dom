@@ -125,6 +125,7 @@ export function toPublicPlayer(player) {
         connected: player.connected,
         lives: player.lives,
         isOut: player.isOut,
+        position: player.position,
     };
 }
 

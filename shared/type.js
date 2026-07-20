@@ -25,4 +25,6 @@ export const GAME_RULES = Object.freeze({
     STARTING_FLAME_RANGE: 1,
     LOBBY_WAIT_SECONDS: 20,
     COUNTDOWN_SECONDS: 10,
+    MAP_ROWS: 11,
+    MAP_COLS: 13,
 });
