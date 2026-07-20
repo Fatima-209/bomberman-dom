@@ -4,7 +4,7 @@ import { GAME_RULES } from "../../../shared/type.js";
 export const MAX_NICKNAME_LENGTH =
     GAME_RULES.MAX_NICKNAME_LENGTH;
 
-export function createNicknameScreen(state, onNicknameSubmit) {
+export function createNicknameScreen(state, onNicknameSubmit, onNicknameInput) {
     const isConnected =
         state.connectionStatus === "connected";
 
@@ -61,6 +61,9 @@ export function createNicknameScreen(state, onNicknameSubmit) {
                         name: "nickname",
                         type: "text",
                         value: state.nicknameInput,
+                        oninput: (event) => {
+                            onNicknameInput(event.target.value);
+                        },
                         maxlength: MAX_NICKNAME_LENGTH,
                         autocomplete: "off",
                         placeholder: "Enter your nickname",

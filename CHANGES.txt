@@ -251,3 +251,89 @@ Verified:
     logged, process exited with code 0, and both ports were free
     immediately after - all before a 4s "still alive" sentinel timer
     would have fired.
+
+
+2026-07-20 — Bugfix: full-page re-render was wiping the nickname input
+
+What was wrong:
+  render.js's render() cleared the entire #app container with
+  innerHTML = "" and rebuilt the whole vnode tree from scratch on
+  every single setState() call, regardless of which piece of state
+  changed. Since gameStore has one global subscriber (renderApp in
+  main.js), any unrelated state change - most commonly another
+  player joining, which broadcasts PLAYER_LIST_UPDATE to every
+  connected socket including ones still on the nickname screen -
+  triggered a full teardown/rebuild of the current player's screen.
+
+  Combined with the nickname <input> being uncontrolled (no onInput
+  handler; typed text lived only in the DOM node's .value, never in
+  state.nicknameInput), this meant: if you were mid-typing your
+  nickname and another player joined the lobby at the same moment,
+  your screen was wiped and rebuilt from state.nicknameInput (still
+  ""), silently erasing what you had typed and dropping input focus.
+  Reported as "blocking the entry of other players when inputting
+  the nickname."
+
+What changed:
+  File: frontend/framework/render.js
+    - render() is now only used for the very first paint. It still
+      clears and builds the container once, but also stores the
+      rendered vnode tree (previousVNode) and the container
+      (rootContainer) for later use.
+    - Added update(newVNode), which is called on every state change
+      after the first render. It runs a recursive patch() that
+      compares the old vnode tree to the new one and only touches
+      the real DOM where something actually changed, instead of
+      destroying and recreating everything.
+    - patch() reuses the same real DOM node whenever the tag hasn't
+      changed, updating only its changed attributes/events and then
+      recursing into its children. Text nodes are updated in place.
+      Nodes that were added/removed/changed type are still
+      created/removed/replaced as needed.
+    - addAttributesToElement now also removes checked/disabled/
+      selected when their value becomes false, instead of only ever
+      adding them - needed so the submit button's disabled state can
+      correctly clear once, e.g., isConnected flips back to true.
+
+  File: frontend/framework/index.js
+    - Exported update alongside the existing render.
+
+  File: frontend/app/screens/nameenterScreen.js
+    - createNicknameScreen now accepts an onNicknameInput callback
+      and the nickname <input> has an onInput handler that calls it
+      on every keystroke, making the input fully controlled by
+      state instead of only being read at submit time.
+
+  File: frontend/main.js
+    - Added handleNicknameInput(rawValue), which calls
+      gameStore.setState({ nicknameInput: rawValue }) and is passed
+      into createNicknameScreen.
+    - renderApp() now tracks whether the first render has happened
+      (hasRenderedOnce) and calls render() only once, then update()
+      for every subsequent store change.
+
+Why this approach:
+  - Keeping the same DOM node across re-renders is what preserves
+    browser focus - a brand new <input> element, even with the
+    right value, is never "focused" from the browser's point of
+    view.
+  - Making the nickname input controlled (state is the single
+    source of truth for its value) means an unrelated re-render now
+    correctly sees old value === new value and leaves the input
+    alone, instead of overwriting the DOM's live value back to a
+    stale state value. Diffing the DOM alone was not enough without
+    this - the two changes only fix the bug together.
+  - This also moves render.js closer to satisfying the framework
+    doc's "Abstracting the DOM" requirement via diffing, and lays
+    groundwork for Stage 2.2's requirement to "re-render only tiles
+    that changed."
+
+Verified:
+  - Two real browser tabs: tab A stayed on the nickname screen while
+    tab B joined; player list and 10s countdown stayed in sync
+    across both tabs with no visible flicker or teardown.
+  - Manually toggled gameStore.setState({ connectionStatus:
+    "disconnected" }) / "connected" repeatedly via devtools console:
+    confirmed the submit button's disabled attribute is correctly
+    added AND removed on each toggle (previously it would only ever
+    be added, never removed).

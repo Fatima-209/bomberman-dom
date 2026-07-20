@@ -1,25 +1,20 @@
-import { render, createElement } from "./framework/index.js";
+import { render, update, createElement } from "./framework/index.js";
 import { GAME_PHASE } from "../shared/gameState.js";
 
-import {
-    createNicknameScreen,
-    MAX_NICKNAME_LENGTH,
-} from "./app/screens/nameenterScreen.js";
+import { createNicknameScreen, MAX_NICKNAME_LENGTH } from "./app/screens/nameenterScreen.js";
 
 import { createLobbyScreen } from "./app/screens/lobbyScreen.js";
 
-import {
-    connect,
-    send,
-    onMessage,
-} from "./network/socket.js";
+import { connect, send, onMessage } from "./network/socket.js";
 
-import {
-    handleServerMessage,
-} from "./network/serverMessageHandler.js";
+import { handleServerMessage } from "./network/serverMessageHandler.js";
 
 import { gameStore } from "./state/gameStore.js";
 import { MSG } from "../shared/events.js";
+
+//TEMPORARY — for manually testing state changes from devtools console.
+//remove this line before committing.
+window.gameStore = gameStore;
 
 const appContainer = document.getElementById("app");
 
@@ -62,6 +57,18 @@ function handleNicknameSubmit(rawNickname) {
         nickname,
     });
 }
+
+//keep state insync with th elive text in the input, so that it doesn't disapear.
+function handleNicknameInput(rawValue){
+    gameStore.setState({
+        nicknameInput: rawValue,
+    });
+}
+
+//this tracks if we ran thw the first render or not, so we know which funxtion we use (render(), update())
+let hasRenderedOnce = false;
+
+
 //renders app and choose which screen to display
 function renderApp() {
     const state = gameStore.getState();
@@ -74,9 +81,15 @@ function renderApp() {
               : createNicknameScreen(
                     state,
                     handleNicknameSubmit,
+                    handleNicknameInput,
                 );
 
-    render(screen, appContainer);
+                if (!hasRenderedOnce){
+                    render(screen, appContainer);
+                    hasRenderedOnce = true;
+                }else{
+                    update(screen);
+                }
 }
 
 // Stub only - Stage 2 replaces this with real board rendering.
