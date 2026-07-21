@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="160" height="160">
+  <!-- faint jewel-toned cells behind, leaded in dark lines. Low-contrast so text stays readable. -->
+  <g opacity="0.5">
+    <polygon points="0,0 80,0 40,50 0,60" fill="#1B2A5A"/>
+    <polygon points="80,0 160,0 160,55 110,45 40,50" fill="#2A2060"/>
+    <polygon points="0,60 40,50 60,110 0,130" fill="#123E52"/>
+    <polygon points="40,50 110,45 120,110 60,110" fill="#3A1F5E"/>
+    <polygon points="110,45 160,55 160,130 120,110" fill="#4A1E52"/>
+    <polygon points="0,130 60,110 50,160 0,160" fill="#1B2A5A"/>
+    <polygon points="60,110 120,110 130,160 50,160" fill="#123E52"/>
+    <polygon points="120,110 160,130 160,160 130,160" fill="#2A2060"/>
+  </g>
+  <!-- lead came -->
+  <g fill="none" stroke="#080611" stroke-width="3" opacity="0.55">
+    <path d="M80,0 L40,50 L0,60 M40,50 L60,110 L0,130 M60,110 L50,160 M110,45 L40,50 M110,45 L120,110 L60,110 M120,110 L130,160 M110,45 L160,55 M0,60 L40,50 M120,110 L160,130"/>
+  </g>
+</svg>

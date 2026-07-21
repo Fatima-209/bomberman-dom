@@ -17,14 +17,21 @@ export function createNicknameScreen(state, onNicknameSubmit, onNicknameInput) {
         createElement(
             "section",
             {
-                className: "nickname-card",
+                className: "nickname-card leaded",
             },
+
+            createElement("span", { className: "corner tl" }),
+            createElement("span", { className: "corner tr" }),
+            createElement("span", { className: "corner bl" }),
+            createElement("span", { className: "corner br" }),
 
             createElement(
                 "h1",
                 {},
                 "Bomberman",
             ),
+
+            createElement("div", { className: "ornament-divider" }),
 
             createElement(
                 "p",

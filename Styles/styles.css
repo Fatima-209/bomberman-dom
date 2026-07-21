@@ -1,56 +1,406 @@
-* {
-    box-sizing: border-box;
+/* ============================================================
+   BOMBERMAN-DOM  ·  "IRIS & LEADED GLASS"
+   A dark, jewel-toned art-nouveau system.
+   Palette drawn from the iris woodblock print; structure from
+   leaded stained glass; linework from the peacock & ouroboros
+   drawings; display type is the Desirable Brust Texture brush.
+   ============================================================ */
+
+/* ---------------- Fonts ---------------- */
+@font-face {
+  font-family: 'Desirable Brust';
+  src: url('./public/fonts/desirable-bursh-texture.ttf') format('truetype');
+  font-display: swap;
 }
 
-html,
+/* Cormorant (serif) + Lato (body) come from Google Fonts;
+   the <link> in index.html is listed in the handoff notes. */
+
+/* ---------------- Design tokens ---------------- */
+:root {
+  /* Grounds — deep indigo night of the iris pond */
+  --night:        #0B1030;
+  --night-2:      #111A44;
+  --panel:        #16204E;
+  --panel-glow:   #1E2C63;
+
+  /* Jewel accents */
+  --teal:         #1FA39C;   /* glowing pond water */
+  --teal-bright:  #34D0C4;
+  --violet:       #6A3D9A;   /* iris petal */
+  --magenta:      #B0479A;   /* iris highlight */
+  --gold:         #D8B24C;   /* leaf / linework */
+  --gold-soft:    #B8935A;
+
+  /* Neutrals / ink */
+  --ivory:        #F4EDDF;
+  --lilac:        #C6B8E4;
+  --lilac-dim:    #8B7CB5;
+  --lead:         #05040D;   /* stained-glass came */
+
+  /* Type */
+  --font-display: 'Desirable Brust', 'Cormorant Garamond', cursive;
+  --font-serif:   'Cormorant Garamond', Georgia, serif;
+  --font-body:    'Lato', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Ornament assets */
+  --orn-corner: url('./public/corner-filigree.svg');
+  --orn-divider: url('./public/divider.svg');
+  --orn-glass: url('./public/glass-leading.svg');
+
+  --frame-pad: 68px;   /* room for corner filigree */
+}
+
+/* ---------------- Reset & base ---------------- */
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+
 body {
-    margin: 0;
-    min-height: 100%;
+  font-family: var(--font-body);
+  color: var(--ivory);
+  background:
+    radial-gradient(1200px 800px at 50% -10%, rgba(31,163,156,0.10), transparent 60%),
+    radial-gradient(900px 700px at 50% 120%, rgba(176,71,154,0.12), transparent 55%),
+    linear-gradient(180deg, var(--night) 0%, #080C24 100%);
+  background-attachment: fixed;
 }
 
-body {
-    font-family: Arial, sans-serif;
-    background-color: #111;
-    color: #fff;
+button, input { font: inherit; }
+#app { min-height: 100vh; }
+
+/* ---------------- Typography ---------------- */
+h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 68px;
+  line-height: 1.2;
+  margin: 0;
+  color: var(--ivory);
+  max-width: 100%;
+  overflow-wrap: break-word;
+  /* soft luminous glow like backlit glass */
+  text-shadow:
+    0 0 18px rgba(31,163,156,0.35),
+    0 0 40px rgba(176,71,154,0.25);
 }
 
-button,
-input {
-    font: inherit;
+h2 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin: 0;
 }
 
-#app {
-    min-height: 100vh;
+p {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 18px;
+  color: var(--lilac);
+  margin: 0;
 }
 
+/* ---------------- The ornate frame ----------------
+   A reusable "leaded panel" with stained-glass fill,
+   a gold double-rule, and peacock-scroll filigree in
+   all four corners. Add class "leaded" to any card. */
+.leaded {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--panel);
+  background-image:
+    linear-gradient(180deg, rgba(30,44,99,0.85), rgba(22,32,78,0.92)),
+    var(--orn-glass);
+  background-size: cover, 220px 220px;
+  background-blend-mode: normal, screen;
+  border: 1px solid var(--gold-soft);
+  box-shadow:
+    0 0 0 1px rgba(216,178,76,0.15),
+    0 24px 60px rgba(0,0,0,0.55),
+    inset 0 0 60px rgba(11,16,48,0.6);
+  padding: var(--frame-pad);
+}
+
+/* inner gold hairline — the second "reveal" of the moulding */
+.leaded::after {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  border: 1px solid rgba(216,178,76,0.45);
+  pointer-events: none;
+}
+
+/* four corner filigrees via a single pseudo-element background,
+   mirrored per corner using multiple background layers */
+.leaded::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: var(--orn-corner), var(--orn-corner), var(--orn-corner), var(--orn-corner);
+  background-repeat: no-repeat;
+  background-size: 78px 78px;
+  background-position:
+    top 4px left 4px,
+    top 4px right 4px,
+    bottom 4px left 4px,
+    bottom 4px right 4px;
+  /* mirror the 3 non-top-left corners */
+}
+/* mirroring trick: since one SVG can't flip per-layer, we overlay
+   flipped copies with separate pseudo layers for TR/BL/BR */
+.leaded > .corner {
+  position: absolute;
+  width: 78px; height: 78px;
+  background: var(--orn-corner) no-repeat center / contain;
+  pointer-events: none;
+}
+.leaded > .corner.tr { top: 4px; right: 4px; transform: scaleX(-1); }
+.leaded > .corner.bl { bottom: 4px; left: 4px; transform: scaleY(-1); }
+.leaded > .corner.br { bottom: 4px; right: 4px; transform: scale(-1,-1); }
+.leaded > .corner.tl { top: 4px; left: 4px; }
+/* hide the background-image corners when explicit .corner spans exist,
+   to avoid doubling (JS adds the spans; see handoff note) */
+.leaded:has(> .corner)::before { background-image: none; }
+
+/* ---------------- Ornamental divider ---------------- */
+.ornament-divider {
+  height: 40px;
+  background: var(--orn-divider) no-repeat center / 240px 40px;
+  margin: 18px auto 26px;
+}
+
+/* ---------------- Buttons ---------------- */
+.btn,
+button[type="submit"] {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 19px;
+  letter-spacing: 1.5px;
+  color: var(--ivory);
+  background:
+    linear-gradient(180deg, rgba(31,163,156,0.16), rgba(106,61,154,0.16));
+  border: 1px solid var(--gold);
+  padding: 13px 28px;
+  width: 100%;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.25s ease;
+}
+.btn:hover:not(:disabled),
+button[type="submit"]:hover:not(:disabled) {
+  background:
+    linear-gradient(180deg, rgba(52,208,196,0.28), rgba(176,71,154,0.26));
+  box-shadow: 0 0 22px rgba(31,163,156,0.35);
+  color: #fff;
+}
+.btn:disabled,
+button[type="submit"]:disabled {
+  border-color: var(--lilac-dim);
+  color: var(--lilac-dim);
+  background: rgba(255,255,255,0.02);
+  cursor: not-allowed;
+}
+
+/* ---------------- Text inputs ---------------- */
+input[type="text"] {
+  width: 100%;
+  background: rgba(5,4,13,0.35);
+  border: none;
+  border-bottom: 1px solid var(--lilac-dim);
+  color: var(--ivory);
+  font-family: var(--font-body);
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  padding: 12px 14px;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+input[type="text"]::placeholder { color: var(--lilac-dim); }
+input[type="text"]:focus {
+  border-bottom-color: var(--teal-bright);
+  box-shadow: 0 6px 18px -8px rgba(52,208,196,0.6);
+}
+input[type="text"]:disabled { opacity: 0.5; }
+
+/* ============================================================
+   SCREEN · Nickname entry
+   ============================================================ */
+.nickname-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+}
+.nickname-card {
+  width: 440px;
+  max-width: 100%;
+  text-align: center;
+}
+.nickname-card h1 { font-size: 44px; margin-bottom: 12px; }
+.nickname-card > p { margin-bottom: 4px; }
+.nickname-card form { display: flex; flex-direction: column; gap: 22px; margin-top: 10px; }
+.nickname-card label {
+  font-family: var(--font-body);
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--lilac-dim);
+  text-align: left;
+  margin-bottom: -12px;
+}
+.nickname-error {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--magenta);
+  background: rgba(176,71,154,0.10);
+  border: 1px solid rgba(176,71,154,0.5);
+  padding: 10px 14px;
+}
+
+/* ============================================================
+   SCREEN · Lobby / waiting room
+   ============================================================ */
+.lobby-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+}
+.lobby-card {
+  width: 460px;
+  max-width: 100%;
+  text-align: center;
+}
+.lobby-card h1 { font-size: 42px; line-height: 1.7; margin-bottom: 12px; }
+.lobby-card > p { margin-bottom: 6px; }
+
+.player-count {
+  font-family: var(--font-body) !important;
+  font-style: normal !important;
+  font-size: 13px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold) !important;
+  margin: 20px 0 !important;
+}
+.player-count::before,
+.player-count::after { content: "·"; margin: 0 10px; color: var(--gold-soft); }
+
+.lobby-card h2 { margin-bottom: 14px; }
+
+.player-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 26px;
+  display: flex;
+  flex-direction: column;
+}
+.player-list-item {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 19px;
+  color: var(--lilac);
+  padding: 12px 8px;
+  border-bottom: 1px solid rgba(139,124,181,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: background 0.2s ease;
+}
+.player-list-item:last-child { border-bottom: none; }
+.player-list-item.current-player {
+  color: var(--teal-bright);
+}
+/* small gold iris-diamond marker, laid out inline with the name so it stays attached to it */
+.player-list-item.current-player::before {
+  content: "";
+  width: 8px; height: 8px;
+  flex-shrink: 0;
+  background: var(--gold);
+  transform: rotate(45deg);
+}
+
+.lobby-message {
+  font-size: 17px;
+  color: var(--ivory);
+}
+
+/* ============================================================
+   SCREEN · Game board
+   ============================================================ */
+.game-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
 .game-board {
-    display: grid;
-    grid-template-columns: repeat(13, 48px);
-    width: fit-content;
-    margin: 20px auto;
+  display: grid;
+  grid-template-columns: repeat(13, 48px);
+  width: fit-content;
+  /* the board itself framed like a leaded window */
+  padding: 10px;
+  background: var(--lead);
+  border: 3px solid var(--gold-soft);
+  box-shadow:
+    0 0 0 1px rgba(216,178,76,0.3),
+    0 30px 70px rgba(0,0,0,0.6);
+  gap: 2px;   /* the 'came' between glass tiles */
 }
-
 .tile {
-    width: 48px;
-    height: 48px;
-    background-size: cover;
+  width: 48px;
+  height: 48px;
+  background-size: cover;
+  position: relative;
 }
-
+/* floor = deep glass */
 .tile.floor {
-    background-image: url("../Styles/public/floor-tile.png");
+  background:
+    radial-gradient(circle at 50% 40%, rgba(31,163,156,0.10), transparent 70%),
+    var(--night-2);
 }
-
+/* wall = indestructible dark stone with violet sheen */
 .tile.wall {
-    background-image: url("../Styles/public/wall-tile.png");
+  background:
+    linear-gradient(135deg, #241748, #150C2E);
+  box-shadow: inset 0 0 0 1px rgba(106,61,154,0.5), inset 0 2px 6px rgba(0,0,0,0.6);
 }
-
+/* block = destructible, glowing amber glass — reads as "break me" */
 .tile.block {
-    background-image: url("../Styles/public/block-tile.png");
+  background:
+    radial-gradient(circle at 50% 35%, rgba(216,178,76,0.35), transparent 65%),
+    linear-gradient(160deg, #3a2a12, #241a2f);
+  box-shadow: inset 0 0 0 1px rgba(216,178,76,0.55);
 }
 
 .player {
-    width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-position: center;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  filter: drop-shadow(0 0 8px rgba(52,208,196,0.5));
+}
+
+/* ---------------- Loading state ---------------- */
+.game-screen > p {
+  font-family: var(--font-display);
+  font-size: 42px;
+  color: var(--teal-bright);
+  text-shadow: 0 0 24px rgba(52,208,196,0.5);
+}
+
+/* ---------------- Responsive ---------------- */
+@media (max-width: 520px) {
+  :root { --frame-pad: 44px; }
+  h1 { font-size: 52px; }
+  .lobby-card h1 { font-size: 40px; }
 }

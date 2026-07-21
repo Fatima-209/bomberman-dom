@@ -470,3 +470,37 @@ Verified:
     on all other clients immediately.
 
 Next up: Stage 3.1 — Bombs.
+
+2026-07-21 — Styling: Iris & Leaded Glass theme on nickname & lobby screens
+
+What changed:
+  File: Styles/styles.css
+    - Replaced the stylesheet with the new "Iris & Leaded Glass" theme
+      (design tokens, fonts, the reusable .leaded card frame with
+      corner filigree, ornamental divider) from the styles handoff.
+    - Fixed the nickname/lobby h1 titles being oversized for their
+      cards (overflowing the frame) by reducing font-size and giving
+      wrapped titles ("Waiting Room") enough line-height so the
+      script font's swashes stop overlapping between lines.
+    - Fixed the current-player diamond marker rendering far from the
+      player's name: .player-list-item is now a centered flex row so
+      the marker lays out next to the name instead of being
+      absolutely positioned against the full-width list item.
+
+  File: Styles/public/
+    - Added corner-filigree.svg, divider.svg, glass-leading.svg, and
+      fonts/desirable-bursh-texture.ttf from the handoff.
+
+  File: index.html
+    - Added the Google Fonts link for Cormorant Garamond + Lato.
+
+  Files: frontend/app/screens/nameenterScreen.js,
+         frontend/app/screens/lobbyScreen.js
+    - Added "leaded" to the nickname-card/lobby-card className and the
+      four corner <span> elements, and inserted the ornament-divider
+      between each card's h1 and intro paragraph.
+
+Verified:
+  - Visual check via screenshots: card borders no longer clipped by
+    the title text, and the current-player marker sits next to the
+    player's name.

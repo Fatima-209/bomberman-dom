@@ -11,14 +11,21 @@ export function createLobbyScreen(state) {
         createElement(
             "section",
             {
-                className: "lobby-card",
+                className: "lobby-card leaded",
             },
+
+            createElement("span", { className: "corner tl" }),
+            createElement("span", { className: "corner tr" }),
+            createElement("span", { className: "corner bl" }),
+            createElement("span", { className: "corner br" }),
 
             createElement(
                 "h1",
                 {},
                 "Waiting Room",
             ),
+
+            createElement("div", { className: "ornament-divider" }),
 
             createElement(
                 "p",
