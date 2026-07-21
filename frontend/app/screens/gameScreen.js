@@ -55,7 +55,7 @@ function createLivesHud(state) {
                         ? "lives-hud-item out"
                         : "lives-hud-item",
                 },
-                `${player.nickname}: ${"❤".repeat(Math.max(player.lives, 0))}`,
+                `${player.nickname}: ${Math.max(player.lives, 0)}`,
             ),
         ),
     );
