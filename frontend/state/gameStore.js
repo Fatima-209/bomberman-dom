@@ -16,8 +16,9 @@ const initialState = {
     waitSecondsRemaining: null,
     countdownSecondsRemaining: null,
 
-    map: null,
-    bombs: [],
+  map: null,
+bombs: [],
+explosions: [],
     powerUps: [],
 
     chatMessages: [],

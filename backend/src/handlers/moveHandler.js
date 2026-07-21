@@ -60,5 +60,13 @@ function isValidMove(row, col, state) {
     if (tileOccupied) return false;
 
     // Stage 3.1 will add: if tile is TILE_TYPE.BOMB return false
+    const bombOccupied = state.bombs.some(
+        (bomb) =>
+            bomb.position.row === row &&
+            bomb.position.col === col,
+    );
+
+    if (bombOccupied) return false;
+
     return true;
 }

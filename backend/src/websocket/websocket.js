@@ -7,6 +7,7 @@ import { onPlayerJoined } from "../handlers/lobbyTimerHandler.js";
 import { addClient, removeClient } from "./hub.js";
 import { getGameState } from "../state/gameState.js";
 import { handleMove } from "../handlers/moveHandler.js";
+import { handlePlaceBomb } from "../handlers/bombHandler.js";
 
 const ALLOWED_ORIGINS = ["http://localhost:3000"];
 
@@ -86,8 +87,10 @@ export function startWebSocketServer(port, httpServer) {
                 } case MSG.MOVE: { 
                     handleMove(playerId, message, getGameState());
                     break;
+                } case MSG.PLACE_BOMB: {
+                    handlePlaceBomb(playerId, getGameState());
+                    break;
                 }
-
                 default:
                     console.warn(
                         `Unknown message type "${message.type}" ` +

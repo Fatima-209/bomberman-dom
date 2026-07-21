@@ -23,21 +23,63 @@ export function createGameScreen(state) {
 function createTiles(state) {
     const tiles = [];
     const playerPositionMap = buildPlayerPositionMap(state.players);
+    const bombPositionMap = buildBombPositionMap(state.bombs);
+    const explosionPositionMap = buildExplosionPositionMap(state.explosions);
 
     for (let row = 0; row < GAME_RULES.MAP_ROWS; row++) {
         for (let col = 0; col < GAME_RULES.MAP_COLS; col++) {
             const tileType = state.map.tiles[row][col];
-            const playerIndex = playerPositionMap[row + "," + col];
-            tiles.push(createTile(tileType, row, col, playerIndex));
+            const positionKey = row + "," + col;
+            const playerIndex = playerPositionMap[positionKey];
+            const bomb = bombPositionMap[positionKey];
+            const hasExplosion = explosionPositionMap[positionKey] === true;
+            tiles.push(
+                createTile(
+                    tileType,
+                    row,
+                    col,
+                    playerIndex,
+                    bomb,
+                    hasExplosion,
+                ),
+            );
         }
     }
 
     return tiles;
 }
 
-function createTile(tileType, row, col, playerIndex) {
+function createTile(
+    tileType,
+    row,
+    col,
+    playerIndex,
+    bomb,
+    hasExplosion,
+) {
     const children = [];
 
+    if (bomb) {
+        children.push(
+            createElement(
+                "div",
+                {
+                    className: "bomb",
+                    "data-bomb-id": bomb.id,
+                },
+            ),
+        );
+    }
+    if (hasExplosion) {
+        children.push(
+            createElement(
+                "div",
+                {
+                    className: "explosion",
+                },
+            ),
+        );
+    }
     // if a player is on this tile, add their image as a child
     if (playerIndex !== undefined) {
         children.push(
@@ -83,6 +125,48 @@ function buildPlayerPositionMap(players) {
             const key = player.position.row + "," + player.position.col;
             map[key] = index;
         }
+    });
+
+    return map;
+}
+
+function buildBombPositionMap(bombs = []) {
+    const map = {};
+
+    bombs.forEach((bomb) => {
+        if (!bomb.position) {
+            return;
+        }
+
+        const key =
+            bomb.position.row +
+            "," +
+            bomb.position.col;
+
+        map[key] = bomb;
+    });
+
+    return map;
+}
+
+function buildExplosionPositionMap(
+    explosions = [],
+) {
+    const map = {};
+
+    explosions.forEach((explosion) => {
+        if (!Array.isArray(explosion.tiles)) {
+            return;
+        }
+
+        explosion.tiles.forEach((position) => {
+            const key =
+                position.row +
+                "," +
+                position.col;
+
+            map[key] = true;
+        });
     });
 
     return map;
