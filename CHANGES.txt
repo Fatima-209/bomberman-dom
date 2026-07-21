@@ -509,13 +509,6 @@ Verified:
 
 2026-07-21 — Stage 3.3 Lives, Death & Win Condition: completed
 
-What was missing:
-  Bombs exploded, destroyed blocks, and broadcast EXPLOSION, but never
-  checked whether a player was standing on a blast tile. PLAYER_HIT,
-  PLAYER_OUT, and GAME_OVER were defined in the message contract but
-  never sent anywhere. The mid-game branch of disconnectHandler.js had
-  a TODO waiting for a win-condition function that didn't exist yet.
-
 What changed:
   File: backend/src/handlers/winConditionHandler.js (new)
     - checkWinCondition(state, reason) - the one reusable function the
@@ -574,21 +567,6 @@ What changed:
       so the lives HUD stacks above the board instead of sitting
       beside it; added .lives-hud / .lives-hud-item.out.
 
-Why this approach:
-  - checkWinCondition() lives in its own file with no dependency on
-    bombHandler.js or disconnectHandler.js, so both can import it
-    without a circular dependency - same pattern as
-    lobbyTimerHandler.js from Stage 1.4.
-  - Checking "is this player's position in the blast tile set" once
-    per player (not once per tile) is what makes "only one life lost
-    per explosion, even with overlapping ranges" true by construction
-    rather than needing extra bookkeeping.
-  - GAME_OVER's reason distinguishes "last-standing" (bomb-caused) from
-    "disconnect", but always reports "draw" when there's no winner,
-    regardless of which path triggered the check - matches the doc's
-    rule that simultaneous elimination and simultaneous disconnect
-    follow the same "0 active players, no winner" rule.
-
 Verified (live server + real ws clients):
   - 2 players, Alice bombs her own spawn tile 3 times in a row: got
     player-hit (livesRemaining 2, then 1), then player-out on the 3rd,
@@ -598,26 +576,10 @@ Verified (live server + real ws clients):
     game-start; Bob received player-list-update (Alice connected:
     false) followed by game-over { winnerNickname: "Bob", reason:
     "disconnect" }.
-  - node --check on every touched/new file passes.
-
-Still not started: power-ups (Stage 3.2), chat (Stage 4.1), FPS
-counter (Stage 4.2). Bomb chain-reaction behavior remains implicit
-(a bomb caught in another's blast blocks the flame but does not
-detonate early) and still isn't explicitly documented as a team
-decision, despite the doc asking for one either way.
-
-Next up: Stage 3.2 - Power-ups.
 
 ---------------------------------------------------------------
 
 2026-07-21 — Stage 3.2 Power-ups: completed
-
-What was missing:
-  Destroying a block never rolled for a power-up, nothing ever spawned
-  on the board, and player.maxBombs/flameRange/speedLevel were set at
-  creation but never changed - there was no way to actually increase
-  them during a match. POWER_UP_SPAWNED/POWER_UP_COLLECTED were
-  defined in the contract but never sent.
 
 What changed:
   File: shared/type.js
@@ -691,19 +653,6 @@ What changed:
     - Added .power-up (same absolute-centered-overlay pattern as
       .bomb, sized slightly smaller).
 
-Why this approach:
-  - Bombs/Flames effects needed no new enforcement code at all -
-    handlePlaceBomb() already read player.maxBombs and player.flameRange
-    directly when placing/sizing a bomb, so incrementing those fields
-    on pickup is the entire effect. Speed is different because nothing
-    server-side currently paces move frequency; the interval is
-    reduced client-side instead, matching the existing architecture
-    rather than introducing a new server-side rate limiter for this.
-  - Splicing the power-up out of state.powerUps at collection time
-    (rather than, say, marking it "collected") is what makes "a power-up
-    must disappear once collected so a second player can't also
-    collect it" true without any extra bookkeeping - a player who
-    reaches an already-spliced tile just finds nothing there.
 
 Verified (live server + real ws clients):
   - Moved a player into a destructible block, bombed it, and confirmed
