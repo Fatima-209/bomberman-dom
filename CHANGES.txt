@@ -504,3 +504,106 @@ Verified:
   - Visual check via screenshots: card borders no longer clipped by
     the title text, and the current-player marker sits next to the
     player's name.
+
+---------------------------------------------------------------
+
+2026-07-21 — Stage 3.3 Lives, Death & Win Condition: completed
+
+What was missing:
+  Bombs exploded, destroyed blocks, and broadcast EXPLOSION, but never
+  checked whether a player was standing on a blast tile. PLAYER_HIT,
+  PLAYER_OUT, and GAME_OVER were defined in the message contract but
+  never sent anywhere. The mid-game branch of disconnectHandler.js had
+  a TODO waiting for a win-condition function that didn't exist yet.
+
+What changed:
+  File: backend/src/handlers/winConditionHandler.js (new)
+    - checkWinCondition(state, reason) - the one reusable function the
+      doc asks for. No-ops unless state.phase is PLAYING. Filters
+      state.players to connected && !isOut; if more than 1 remain,
+      does nothing. If exactly 1 remains, that player wins. If 0
+      remain (simultaneous elimination/disconnect), it's a draw -
+      GAME_OVER is broadcast either way with winnerId/winnerNickname/
+      reason ("draw" always overrides the caller's reason when there's
+      no winner).
+
+  File: backend/src/handlers/bombHandler.js
+    - explodeBomb() now calls applyExplosionDamage() right after the
+      EXPLOSION broadcast, then checkWinCondition(state, "last-standing").
+    - applyExplosionDamage(): builds a Set of blast-tile coordinates,
+      then checks each connected, non-out player's position against it
+      ONCE (not once per tile) - this is what guarantees only one life
+      is lost per explosion even with overlapping blast ranges from
+      multiple directions/bombs. Decrements lives; broadcasts
+      PLAYER_OUT if that reaches 0, otherwise PLAYER_HIT with the
+      remaining count.
+
+  File: backend/src/handlers/disconnectHandler.js
+    - Mid-game branch now calls checkWinCondition(state, "disconnect")
+      instead of the old TODO block that computed activePlayers.length
+      and did nothing with it.
+
+  Frontend:
+  File: frontend/network/serverMessageHandler.js
+    - Added PLAYER_HIT (updates the player's lives in state.players),
+      PLAYER_OUT (sets lives: 0, isOut: true), and GAME_OVER (sets
+      phase to GAME_OVER, stores winnerId/winnerNickname/winReason,
+      stops the input game loop) cases.
+  File: frontend/state/gameStore.js
+    - Added winnerNickname and winReason to initial state alongside
+      the existing winnerId.
+  File: frontend/app/screens/gameScreen.js
+    - buildPlayerPositionMap() now also skips isOut players (was only
+      skipping disconnected ones), so eliminated players stop
+      rendering as movable/collidable on the board, per the doc's
+      requirement.
+    - Added createLivesHud() - a small per-player lives readout above
+      the board (hearts, struck through once a player is out).
+    - Added createGameOverScreen() - shows the winner's nickname or
+      "No winner - draw."
+  File: frontend/main.js
+    - renderApp() now branches to the game-over screen when
+      phase === GAME_OVER. Removed the now-dead
+      createGameStartedPlaceholder()/gameLoopStarted - the actual
+      game-loop start already moved into serverMessageHandler.js's
+      GAME_START handler in an earlier commit, so this stub and its
+      now-unused startGameLoop/stopGameLoop imports in main.js were
+      leftover dead code.
+  File: Styles/styles.css
+    - .game-screen is now a column flex container (was row-implicit)
+      so the lives HUD stacks above the board instead of sitting
+      beside it; added .lives-hud / .lives-hud-item.out.
+
+Why this approach:
+  - checkWinCondition() lives in its own file with no dependency on
+    bombHandler.js or disconnectHandler.js, so both can import it
+    without a circular dependency - same pattern as
+    lobbyTimerHandler.js from Stage 1.4.
+  - Checking "is this player's position in the blast tile set" once
+    per player (not once per tile) is what makes "only one life lost
+    per explosion, even with overlapping ranges" true by construction
+    rather than needing extra bookkeeping.
+  - GAME_OVER's reason distinguishes "last-standing" (bomb-caused) from
+    "disconnect", but always reports "draw" when there's no winner,
+    regardless of which path triggered the check - matches the doc's
+    rule that simultaneous elimination and simultaneous disconnect
+    follow the same "0 active players, no winner" rule.
+
+Verified (live server + real ws clients):
+  - 2 players, Alice bombs her own spawn tile 3 times in a row: got
+    player-hit (livesRemaining 2, then 1), then player-out on the 3rd,
+    then game-over { winnerNickname: "Bob", reason: "last-standing" }.
+    Bob was never hit by Alice's blast (spawn corners are far apart).
+  - 2 players, mid-game disconnect: Alice's socket closed after
+    game-start; Bob received player-list-update (Alice connected:
+    false) followed by game-over { winnerNickname: "Bob", reason:
+    "disconnect" }.
+  - node --check on every touched/new file passes.
+
+Still not started: power-ups (Stage 3.2), chat (Stage 4.1), FPS
+counter (Stage 4.2). Bomb chain-reaction behavior remains implicit
+(a bomb caught in another's blast blocks the flame but does not
+detonate early) and still isn't explicitly documented as a team
+decision, despite the doc asking for one either way.
+
+Next up: Stage 3.2 - Power-ups.

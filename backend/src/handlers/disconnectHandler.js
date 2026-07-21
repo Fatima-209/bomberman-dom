@@ -3,6 +3,7 @@ import { GAME_PHASE } from "../../../shared/gameState.js";
 import { getGameState } from "../state/gameState.js";
 import { broadcastPlayerList } from "./joingameHandler.js";
 import { onPlayerLeft } from "./lobbyTimerHandler.js";
+import { checkWinCondition } from "./winConditionHandler.js";
 
 export function handleDisconnect(playerId) {
     const state = getGameState();
@@ -36,13 +37,5 @@ export function handleDisconnect(playerId) {
 
     broadcastPlayerList(state);
 
-    const activePlayers = Object.values(state.players).filter(
-        (p) => p.connected && !p.isOut,
-    );
-
-    if (activePlayers.length <= 1) {
-        // TODO (Stage 3.3): call the shared win-condition function here.
-        // activePlayers.length === 1 -> that player wins immediately.
-        // activePlayers.length === 0 -> no winner, game ends.
-    }
+    checkWinCondition(state, "disconnect");
 }

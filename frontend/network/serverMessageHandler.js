@@ -1,7 +1,7 @@
 import { MSG } from "../../shared/events.js";
 import { GAME_PHASE } from "../../shared/gameState.js";
 import { gameStore } from "../state/gameStore.js";
-import { startGameLoop } from "../app/game/inputHandler.js";
+import { startGameLoop, stopGameLoop } from "../app/game/inputHandler.js";
 import {
     GAME_RULES,
     TILE_TYPE,
@@ -44,6 +44,18 @@ export function handleServerMessage(message) {
 
         case MSG.BLOCK_DESTROYED:
             handleBlockDestroyedMessage(message);
+            break;
+
+        case MSG.PLAYER_HIT:
+            handlePlayerHitMessage(message);
+            break;
+
+        case MSG.PLAYER_OUT:
+            handlePlayerOutMessage(message);
+            break;
+
+        case MSG.GAME_OVER:
+            handleGameOverMessage(message);
             break;
 
         default:
@@ -283,4 +295,40 @@ function handleBlockDestroyedMessage(message) {
             tiles: updatedTiles,
         },
     });
+}
+
+function handlePlayerHitMessage(message) {
+    updatePlayer(message.playerId, {
+        lives: message.livesRemaining,
+    });
+}
+
+function handlePlayerOutMessage(message) {
+    updatePlayer(message.playerId, {
+        lives: 0,
+        isOut: true,
+    });
+}
+
+function updatePlayer(playerId, changes) {
+    const state = gameStore.getState();
+
+    const updatedPlayers = state.players.map((player) =>
+        player.id === playerId
+            ? { ...player, ...changes }
+            : player,
+    );
+
+    gameStore.setState({ players: updatedPlayers });
+}
+
+function handleGameOverMessage(message) {
+    gameStore.setState({
+        phase: GAME_PHASE.GAME_OVER,
+        winnerId: message.winnerId,
+        winnerNickname: message.winnerNickname,
+        winReason: message.reason,
+    });
+
+    stopGameLoop();
 }

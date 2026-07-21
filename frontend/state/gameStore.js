@@ -24,6 +24,8 @@ explosions: [],
     chatMessages: [],
 
     winnerId: null,
+    winnerNickname: null,
+    winReason: null,
 };
 
 export const gameStore = createStore(initialState);

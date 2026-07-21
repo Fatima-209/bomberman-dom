@@ -12,10 +12,51 @@ export function createGameScreen(state) {
     return createElement(
         "main",
         { className: "game-screen" },
+        createLivesHud(state),
         createElement(
             "div",
             { className: "game-board" },
             ...createTiles(state),
+        ),
+    );
+}
+
+export function createGameOverScreen(state) {
+    const message = state.winnerNickname
+        ? `${state.winnerNickname} wins!`
+        : "No winner - draw.";
+
+    return createElement(
+        "main",
+        { className: "game-screen" },
+        createElement(
+            "section",
+            { className: "lobby-card leaded" },
+            createElement("span", { className: "corner tl" }),
+            createElement("span", { className: "corner tr" }),
+            createElement("span", { className: "corner bl" }),
+            createElement("span", { className: "corner br" }),
+            createElement("h1", {}, "Game Over"),
+            createElement("div", { className: "ornament-divider" }),
+            createElement("p", {}, message),
+        ),
+    );
+}
+
+function createLivesHud(state) {
+    return createElement(
+        "div",
+        { className: "lives-hud" },
+        ...state.players.map((player) =>
+            createElement(
+                "span",
+                {
+                    className: player.isOut
+                        ? "lives-hud-item out"
+                        : "lives-hud-item",
+                },
+                `${player.nickname}: ${"❤".repeat(Math.max(player.lives, 0))}`,
+            ),
         ),
     );
 }
@@ -121,7 +162,7 @@ function buildPlayerPositionMap(players) {
     const map = {};
 
     players.forEach((player, index) => {
-        if (player.position && player.connected) {
+        if (player.position && player.connected && !player.isOut) {
             const key = player.position.row + "," + player.position.col;
             map[key] = index;
         }

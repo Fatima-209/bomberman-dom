@@ -5,6 +5,7 @@ import {
 } from "../../../shared/type.js";
 import { MSG } from "../../../shared/events.js";
 import { broadcastToAll } from "../websocket/hub.js";
+import { checkWinCondition } from "./winConditionHandler.js";
 
 const BLAST_DIRECTIONS = [
     { row: -1, col: 0 },
@@ -113,6 +114,53 @@ function explodeBomb(bombId, state) {
                 GAME_RULES.EXPLOSION_DURATION_MS,
         },
     });
+
+    applyExplosionDamage(explosionTiles, bomb, state);
+
+    checkWinCondition(state, "last-standing");
+}
+
+// A player standing on a blast tile loses exactly one life for this
+// explosion, even if multiple overlapping tiles/bombs would otherwise
+// hit them - we check "is this player on ANY blast tile" once per
+// player, not once per tile.
+function applyExplosionDamage(explosionTiles, bomb, state) {
+    const blastTiles = new Set(
+        explosionTiles.map(
+            (tile) => `${tile.row},${tile.col}`,
+        ),
+    );
+
+    for (const player of Object.values(state.players)) {
+        if (!player.connected || player.isOut || !player.position) {
+            continue;
+        }
+
+        const key = `${player.position.row},${player.position.col}`;
+
+        if (!blastTiles.has(key)) {
+            continue;
+        }
+
+        player.lives -= 1;
+
+        if (player.lives <= 0) {
+            player.lives = 0;
+            player.isOut = true;
+
+            broadcastToAll({
+                type: MSG.PLAYER_OUT,
+                playerId: player.id,
+            });
+        } else {
+            broadcastToAll({
+                type: MSG.PLAYER_HIT,
+                playerId: player.id,
+                livesRemaining: player.lives,
+                bombId: bomb.id,
+            });
+        }
+    }
 }
 
 function restoreOwnerBombCount(bomb, state) {

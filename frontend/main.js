@@ -3,7 +3,7 @@ import { GAME_PHASE } from "../shared/gameState.js";
 
 import { createNicknameScreen, MAX_NICKNAME_LENGTH } from "./app/screens/nameenterScreen.js";
 import { createLobbyScreen } from "./app/screens/lobbyScreen.js";
-import { createGameScreen } from "./app/screens/gameScreen.js";
+import { createGameScreen, createGameOverScreen } from "./app/screens/gameScreen.js";
 
 import { connect, send, onMessage } from "./network/socket.js";
 
@@ -11,7 +11,7 @@ import { handleServerMessage } from "./network/serverMessageHandler.js";
 
 import { gameStore } from "./state/gameStore.js";
 import { MSG } from "../shared/events.js";
-import { startInputListening, startGameLoop, stopGameLoop } from "./app/game/inputHandler.js";
+import { startInputListening } from "./app/game/inputHandler.js";
 
 //TEMPORARY — for manually testing state changes from devtools console.
 //remove this line before committing.
@@ -75,15 +75,17 @@ function renderApp() {
     const state = gameStore.getState();
 
     const screen =
-    state.phase === GAME_PHASE.PLAYING
-        ? createGameScreen(state)
-        : state.playerId
-          ? createLobbyScreen(state)
-          : createNicknameScreen(
-                state,
-                handleNicknameSubmit,
-                handleNicknameInput,
-            );
+    state.phase === GAME_PHASE.GAME_OVER
+        ? createGameOverScreen(state)
+        : state.phase === GAME_PHASE.PLAYING
+          ? createGameScreen(state)
+          : state.playerId
+            ? createLobbyScreen(state)
+            : createNicknameScreen(
+                  state,
+                  handleNicknameSubmit,
+                  handleNicknameInput,
+              );
 
               if (!hasRenderedOnce){
                 render(screen, appContainer);
@@ -91,18 +93,6 @@ function renderApp() {
             }else{
                 update(screen);
             }
-}
-
-let gameLoopStarted = false;
-
-function createGameStartedPlaceholder(state) {
-    if (!gameLoopStarted) {
-        gameLoopStarted = true;
-        startInputListening();
-        startGameLoop(() => gameStore.getState().playerId);
-    }
-
-    return createGameScreen(state);
 }
 
 startInputListening();
