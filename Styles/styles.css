@@ -73,3 +73,15 @@ input {
     background-repeat: no-repeat;
     z-index: 1;
 }
+
+.explosion {
+    position: absolute;
+    inset: 0;
+    background-image: url("../Styles/public/explosion.gif");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    pointer-events: none;
+    z-index: 3;
+}
+

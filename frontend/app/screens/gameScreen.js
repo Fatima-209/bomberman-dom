@@ -24,6 +24,7 @@ function createTiles(state) {
     const tiles = [];
     const playerPositionMap = buildPlayerPositionMap(state.players);
     const bombPositionMap = buildBombPositionMap(state.bombs);
+    const explosionPositionMap = buildExplosionPositionMap(state.explosions);
 
     for (let row = 0; row < GAME_RULES.MAP_ROWS; row++) {
         for (let col = 0; col < GAME_RULES.MAP_COLS; col++) {
@@ -31,7 +32,7 @@ function createTiles(state) {
             const positionKey = row + "," + col;
             const playerIndex = playerPositionMap[positionKey];
             const bomb = bombPositionMap[positionKey];
-
+            const hasExplosion = explosionPositionMap[positionKey] === true;
             tiles.push(
                 createTile(
                     tileType,
@@ -39,6 +40,7 @@ function createTiles(state) {
                     col,
                     playerIndex,
                     bomb,
+                    hasExplosion,
                 ),
             );
         }
@@ -53,6 +55,7 @@ function createTile(
     col,
     playerIndex,
     bomb,
+    hasExplosion,
 ) {
     const children = [];
 
@@ -67,7 +70,16 @@ function createTile(
             ),
         );
     }
-
+    if (hasExplosion) {
+        children.push(
+            createElement(
+                "div",
+                {
+                    className: "explosion",
+                },
+            ),
+        );
+    }
     // if a player is on this tile, add their image as a child
     if (playerIndex !== undefined) {
         children.push(
@@ -132,6 +144,29 @@ function buildBombPositionMap(bombs = []) {
             bomb.position.col;
 
         map[key] = bomb;
+    });
+
+    return map;
+}
+
+function buildExplosionPositionMap(
+    explosions = [],
+) {
+    const map = {};
+
+    explosions.forEach((explosion) => {
+        if (!Array.isArray(explosion.tiles)) {
+            return;
+        }
+
+        explosion.tiles.forEach((position) => {
+            const key =
+                position.row +
+                "," +
+                position.col;
+
+            map[key] = true;
+        });
     });
 
     return map;
