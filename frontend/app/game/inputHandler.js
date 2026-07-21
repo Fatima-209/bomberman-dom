@@ -6,6 +6,24 @@ const keysHeld = {};
 
 export function startInputListening() {
     document.addEventListener("keydown", (event) => {
+        const isTyping =
+            event.target instanceof HTMLInputElement ||
+            event.target instanceof HTMLTextAreaElement;
+
+        if (
+            !isTyping &&
+            event.code === "Space" &&
+            !event.repeat
+        ) {
+            event.preventDefault();
+
+            send({
+                type: MSG.PLACE_BOMB,
+            });
+
+            return;
+        }
+
         keysHeld[event.key] = true;
     });
 

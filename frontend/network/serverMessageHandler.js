@@ -30,6 +30,9 @@ export function handleServerMessage(message) {
             handlePositionUpdateMessage(message);
             break;
 
+        case MSG.BOMB_PLACED:
+            handleBombPlacedMessage(message);
+            break;
         default:
             console.warn(
                 `Unhandled server message: ${message.type}`,
@@ -129,4 +132,37 @@ function handlePositionUpdateMessage(message) {
     });
 
     gameStore.setState({ players: updatedPlayers });
+}
+
+function handleBombPlacedMessage(message) {
+    const bomb = message.bomb;
+
+    if (
+        !bomb ||
+        typeof bomb.id !== "string" ||
+        !bomb.position
+    ) {
+        console.warn(
+            "Bomb placed message did not contain a valid bomb.",
+        );
+        return;
+    }
+
+    const state = gameStore.getState();
+
+    const bombAlreadyExists = state.bombs.some(
+        (existingBomb) =>
+            existingBomb.id === bomb.id,
+    );
+
+    if (bombAlreadyExists) {
+        return;
+    }
+
+    gameStore.setState({
+        bombs: [
+            ...state.bombs,
+            bomb,
+        ],
+    });
 }

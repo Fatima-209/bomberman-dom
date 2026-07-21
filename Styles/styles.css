@@ -34,6 +34,8 @@ input {
     width: 48px;
     height: 48px;
     background-size: cover;
+    position: relative;
+    overflow: hidden;
 }
 
 .tile.floor {
@@ -53,4 +55,21 @@ input {
     height: 100%;
     background-size: cover;
     background-position: center;
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+}
+
+.bomb {
+    position: absolute;
+    width: 38px;
+    height: 38px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background-image: url("../Styles/public/bomb-sprite.png");
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 1;
 }

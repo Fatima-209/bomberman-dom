@@ -23,20 +23,50 @@ export function createGameScreen(state) {
 function createTiles(state) {
     const tiles = [];
     const playerPositionMap = buildPlayerPositionMap(state.players);
+    const bombPositionMap = buildBombPositionMap(state.bombs);
 
     for (let row = 0; row < GAME_RULES.MAP_ROWS; row++) {
         for (let col = 0; col < GAME_RULES.MAP_COLS; col++) {
             const tileType = state.map.tiles[row][col];
-            const playerIndex = playerPositionMap[row + "," + col];
-            tiles.push(createTile(tileType, row, col, playerIndex));
+            const positionKey = row + "," + col;
+            const playerIndex = playerPositionMap[positionKey];
+            const bomb = bombPositionMap[positionKey];
+
+            tiles.push(
+                createTile(
+                    tileType,
+                    row,
+                    col,
+                    playerIndex,
+                    bomb,
+                ),
+            );
         }
     }
 
     return tiles;
 }
 
-function createTile(tileType, row, col, playerIndex) {
+function createTile(
+    tileType,
+    row,
+    col,
+    playerIndex,
+    bomb,
+) {
     const children = [];
+
+    if (bomb) {
+        children.push(
+            createElement(
+                "div",
+                {
+                    className: "bomb",
+                    "data-bomb-id": bomb.id,
+                },
+            ),
+        );
+    }
 
     // if a player is on this tile, add their image as a child
     if (playerIndex !== undefined) {
@@ -83,6 +113,25 @@ function buildPlayerPositionMap(players) {
             const key = player.position.row + "," + player.position.col;
             map[key] = index;
         }
+    });
+
+    return map;
+}
+
+function buildBombPositionMap(bombs = []) {
+    const map = {};
+
+    bombs.forEach((bomb) => {
+        if (!bomb.position) {
+            return;
+        }
+
+        const key =
+            bomb.position.row +
+            "," +
+            bomb.position.col;
+
+        map[key] = bomb;
     });
 
     return map;
