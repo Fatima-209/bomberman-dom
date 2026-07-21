@@ -1,7 +1,7 @@
 import { GAME_PHASE } from "../../../shared/gameState.js";
 import { MSG } from "../../../shared/events.js";
 import { broadcastToAll } from "../websocket/hub.js";
-
+// win
 // Single reusable win-condition check, called after an explosion resolves
 // and after a disconnect - both paths just report why they're checking.
 export function checkWinCondition(state, reason) {
