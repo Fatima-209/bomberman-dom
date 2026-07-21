@@ -48,18 +48,11 @@ function handleJoinedMessage(message) {
     }
 
     gameStore.setState({
-        phase: GAME_PHASE.PLAYING,
-        waitSecondsRemaining: null,
-        countdownSecondsRemaining: null,
-        map: message.map,
-        players: Array.isArray(message.players)
-            ? message.players
-            : [],
+        playerId: player.id,
+        nickname: player.nickname,
+        nicknameInput: player.nickname,
+        joinError: "",
     });
-
-    // start the game loop, passes a function so the loop always
-    // reads the current playerId from state rather than a stale value
-    startGameLoop(() => gameStore.getState().playerId);
 }
 
 function handleJoinErrorMessage(message) {
@@ -118,6 +111,10 @@ function handleGameStartMessage(message) {
             ? message.players
             : [],
     });
+
+    // start the game loop, passes a function so the loop always
+    // reads the current playerId from state rather than a stale value
+    startGameLoop(() => gameStore.getState().playerId);
 }
 
 function handlePositionUpdateMessage(message) {
