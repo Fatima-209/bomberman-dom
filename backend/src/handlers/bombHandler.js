@@ -2,10 +2,13 @@ import { GAME_PHASE } from "../../../shared/gameState.js";
 import {
     GAME_RULES,
     TILE_TYPE,
+    POWER_UP_TYPE,
 } from "../../../shared/type.js";
 import { MSG } from "../../../shared/events.js";
 import { broadcastToAll } from "../websocket/hub.js";
 import { checkWinCondition } from "./winConditionHandler.js";
+
+const POWER_UP_TYPES = Object.values(POWER_UP_TYPE);
 
 const BLAST_DIRECTIONS = [
     { row: -1, col: 0 },
@@ -266,5 +269,28 @@ function destroyBlocks(explosionTiles, state) {
             type: MSG.BLOCK_DESTROYED,
             position,
         });
+
+        maybeSpawnPowerUp(position, state);
     }
+}
+
+// at most one power-up per destroyed block - a single roll, and if it
+// misses, nothing spawns there at all.
+function maybeSpawnPowerUp(position, state) {
+    if (Math.random() >= GAME_RULES.POWER_UP_DROP_CHANCE) {
+        return;
+    }
+
+    const type =
+        POWER_UP_TYPES[
+            Math.floor(Math.random() * POWER_UP_TYPES.length)
+        ];
+
+    state.powerUps.push({ position, type });
+
+    broadcastToAll({
+        type: MSG.POWER_UP_SPAWNED,
+        position,
+        powerUpType: type,
+    });
 }

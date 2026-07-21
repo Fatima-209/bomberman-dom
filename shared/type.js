@@ -29,4 +29,14 @@ export const GAME_RULES = Object.freeze({
     MAP_COLS: 13,
         BOMB_FUSE_MS: 3000,
     EXPLOSION_DURATION_MS: 600,
+
+    // not specified in requirements - documented team choice
+    POWER_UP_DROP_CHANCE: 0.3,
+
+    // movement pacing: each Speed power-up level shaves SPEED_STEP_MS off
+    // the interval between moves the client is allowed to send, down to
+    // MIN_MOVE_INTERVAL_MS as a floor.
+    BASE_MOVE_INTERVAL_MS: 150,
+    SPEED_STEP_MS: 25,
+    MIN_MOVE_INTERVAL_MS: 60,
 });

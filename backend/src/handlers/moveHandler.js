@@ -1,4 +1,4 @@
-import { TILE_TYPE, GAME_RULES } from "../../../shared/type.js";
+import { TILE_TYPE, GAME_RULES, POWER_UP_TYPE } from "../../../shared/type.js";
 import { broadcastToAll } from "../websocket/hub.js";
 import { MSG } from "../../../shared/events.js";
 import { GAME_PHASE } from "../../../shared/gameState.js";
@@ -40,6 +40,42 @@ export function handleMove(playerId, message, state) {
         playerId,
         position: { row: newRow, col: newCol },
     });
+
+    collectPowerUpIfPresent(player, state);
+}
+
+function collectPowerUpIfPresent(player, state) {
+    const index = state.powerUps.findIndex(
+        (powerUp) =>
+            powerUp.position.row === player.position.row &&
+            powerUp.position.col === player.position.col,
+    );
+
+    if (index === -1) return;
+
+    const [powerUp] = state.powerUps.splice(index, 1);
+
+    applyPowerUpEffect(player, powerUp.type);
+
+    broadcastToAll({
+        type: MSG.POWER_UP_COLLECTED,
+        playerId: player.id,
+        position: powerUp.position,
+        powerUpType: powerUp.type,
+        maxBombs: player.maxBombs,
+        flameRange: player.flameRange,
+        speedLevel: player.speedLevel,
+    });
+}
+
+function applyPowerUpEffect(player, type) {
+    if (type === POWER_UP_TYPE.BOMBS) {
+        player.maxBombs += 1;
+    } else if (type === POWER_UP_TYPE.FLAMES) {
+        player.flameRange += 1;
+    } else if (type === POWER_UP_TYPE.SPEED) {
+        player.speedLevel += 1;
+    }
 }
 
 function isValidMove(row, col, state) {

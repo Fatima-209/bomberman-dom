@@ -46,6 +46,14 @@ export function handleServerMessage(message) {
             handleBlockDestroyedMessage(message);
             break;
 
+        case MSG.POWER_UP_SPAWNED:
+            handlePowerUpSpawnedMessage(message);
+            break;
+
+        case MSG.POWER_UP_COLLECTED:
+            handlePowerUpCollectedMessage(message);
+            break;
+
         case MSG.PLAYER_HIT:
             handlePlayerHitMessage(message);
             break;
@@ -140,9 +148,15 @@ function handleGameStartMessage(message) {
             : [],
     });
 
-    // start the game loop, passes a function so the loop always
-    // reads the current playerId from state rather than a stale value
-    startGameLoop(() => gameStore.getState().playerId);
+    // start the game loop, passes a function so the loop always reads
+    // the current player object (including live speedLevel) from state
+    // rather than a stale value captured once at game-start
+    startGameLoop(() => {
+        const current = gameStore.getState();
+        return current.players.find(
+            (player) => player.id === current.playerId,
+        ) || null;
+    });
 }
 
 function handlePositionUpdateMessage(message) {
@@ -294,6 +308,37 @@ function handleBlockDestroyedMessage(message) {
             ...state.map,
             tiles: updatedTiles,
         },
+    });
+}
+
+function handlePowerUpSpawnedMessage(message) {
+    const state = gameStore.getState();
+
+    gameStore.setState({
+        powerUps: [
+            ...state.powerUps,
+            { position: message.position, type: message.powerUpType },
+        ],
+    });
+}
+
+function handlePowerUpCollectedMessage(message) {
+    const state = gameStore.getState();
+
+    gameStore.setState({
+        powerUps: state.powerUps.filter(
+            (powerUp) =>
+                !(
+                    powerUp.position.row === message.position.row &&
+                    powerUp.position.col === message.position.col
+                ),
+        ),
+    });
+
+    updatePlayer(message.playerId, {
+        maxBombs: message.maxBombs,
+        flameRange: message.flameRange,
+        speedLevel: message.speedLevel,
     });
 }
 

@@ -55,7 +55,10 @@ function createLivesHud(state) {
                         ? "lives-hud-item out"
                         : "lives-hud-item",
                 },
-                `${player.nickname}: ${Math.max(player.lives, 0)}`,
+                `${player.nickname}: ${Math.max(player.lives, 0)} ` +
+                    `(bombs ${player.maxBombs ?? 1}, ` +
+                    `flames ${player.flameRange ?? 1}, ` +
+                    `speed ${player.speedLevel ?? 0})`,
             ),
         ),
     );
@@ -66,6 +69,7 @@ function createTiles(state) {
     const playerPositionMap = buildPlayerPositionMap(state.players);
     const bombPositionMap = buildBombPositionMap(state.bombs);
     const explosionPositionMap = buildExplosionPositionMap(state.explosions);
+    const powerUpPositionMap = buildPowerUpPositionMap(state.powerUps);
 
     for (let row = 0; row < GAME_RULES.MAP_ROWS; row++) {
         for (let col = 0; col < GAME_RULES.MAP_COLS; col++) {
@@ -74,6 +78,7 @@ function createTiles(state) {
             const playerIndex = playerPositionMap[positionKey];
             const bomb = bombPositionMap[positionKey];
             const hasExplosion = explosionPositionMap[positionKey] === true;
+            const powerUp = powerUpPositionMap[positionKey];
             tiles.push(
                 createTile(
                     tileType,
@@ -82,6 +87,7 @@ function createTiles(state) {
                     playerIndex,
                     bomb,
                     hasExplosion,
+                    powerUp,
                 ),
             );
         }
@@ -97,9 +103,24 @@ function createTile(
     playerIndex,
     bomb,
     hasExplosion,
+    powerUp,
 ) {
     const children = [];
 
+    if (powerUp) {
+        children.push(
+            createElement(
+                "div",
+                {
+                    className: "power-up power-up-" + powerUp.type,
+                    style:
+                        "background-image: url('../Styles/public/" +
+                        POWER_UP_IMAGES[powerUp.type] +
+                        "')",
+                },
+            ),
+        );
+    }
     if (bomb) {
         children.push(
             createElement(
@@ -158,6 +179,12 @@ const PLAYER_IMAGES = [
     "player-four.png",
 ];
 
+const POWER_UP_IMAGES = {
+    bombs: "powerup-bombs.png",
+    flames: "powerup-flames.png",
+    speed: "powerup-speed.png",
+};
+
 function buildPlayerPositionMap(players) {
     const map = {};
 
@@ -185,6 +212,25 @@ function buildBombPositionMap(bombs = []) {
             bomb.position.col;
 
         map[key] = bomb;
+    });
+
+    return map;
+}
+
+function buildPowerUpPositionMap(powerUps = []) {
+    const map = {};
+
+    powerUps.forEach((powerUp) => {
+        if (!powerUp.position) {
+            return;
+        }
+
+        const key =
+            powerUp.position.row +
+            "," +
+            powerUp.position.col;
+
+        map[key] = powerUp;
     });
 
     return map;

@@ -126,6 +126,9 @@ export function toPublicPlayer(player) {
         lives: player.lives,
         isOut: player.isOut,
         position: player.position,
+        maxBombs: player.maxBombs,
+        flameRange: player.flameRange,
+        speedLevel: player.speedLevel,
     };
 }
 

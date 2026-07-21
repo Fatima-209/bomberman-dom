@@ -607,3 +607,115 @@ detonate early) and still isn't explicitly documented as a team
 decision, despite the doc asking for one either way.
 
 Next up: Stage 3.2 - Power-ups.
+
+---------------------------------------------------------------
+
+2026-07-21 — Stage 3.2 Power-ups: completed
+
+What was missing:
+  Destroying a block never rolled for a power-up, nothing ever spawned
+  on the board, and player.maxBombs/flameRange/speedLevel were set at
+  creation but never changed - there was no way to actually increase
+  them during a match. POWER_UP_SPAWNED/POWER_UP_COLLECTED were
+  defined in the contract but never sent.
+
+What changed:
+  File: shared/type.js
+    - Added GAME_RULES.POWER_UP_DROP_CHANCE (0.3 / 30%) - not specified
+      in requirements, documented team choice, same pattern as the
+      60% block-spawn chance from Stage 2.1.
+    - Added BASE_MOVE_INTERVAL_MS (150), SPEED_STEP_MS (25), and
+      MIN_MOVE_INTERVAL_MS (60) - documents how a Speed level
+      translates into a faster move-send interval and the floor on
+      how fast that can get.
+
+  File: backend/src/handlers/bombHandler.js
+    - destroyBlocks() now calls maybeSpawnPowerUp(position, state) for
+      every block it destroys. One Math.random() roll per block (at
+      most one power-up per destroyed block, by construction - it's a
+      single roll, not a loop). On a hit, picks uniformly among the 3
+      POWER_UP_TYPE values, pushes { position, type } onto
+      state.powerUps, and broadcasts POWER_UP_SPAWNED.
+
+  File: backend/src/handlers/moveHandler.js
+    - handleMove() now calls collectPowerUpIfPresent() right after a
+      valid move's POSITION_UPDATE broadcast.
+    - collectPowerUpIfPresent(): looks up state.powerUps for an entry
+      at the player's new position; if found, splices it out (so a
+      second player arriving later finds nothing there - this is what
+      guarantees only one player can ever collect a given power-up)
+      and applies the effect.
+    - applyPowerUpEffect(): Bombs -> maxBombs += 1, Flames -> flameRange
+      += 1, Speed -> speedLevel += 1. Broadcasts POWER_UP_COLLECTED
+      with the player's resulting maxBombs/flameRange/speedLevel
+      included directly, so the client never has to re-derive the new
+      value itself - server stays the single source of truth.
+    - No new collision logic needed: power-ups were never checked
+      against in isValidMove, so tiles with a power-up were already
+      walkable.
+
+  File: backend/src/handlers/joingameHandler.js
+    - toPublicPlayer() now includes maxBombs, flameRange, and
+      speedLevel, so clients (and specifically each player's own
+      client, for the Speed effect below) can see their current levels.
+
+  Frontend:
+  File: frontend/network/serverMessageHandler.js
+    - Added POWER_UP_SPAWNED (appends to state.powerUps) and
+      POWER_UP_COLLECTED (removes the matching entry from
+      state.powerUps, then overwrites the collecting player's
+      maxBombs/flameRange/speedLevel with the server-provided values -
+      no client-side increment logic to keep in sync with the server's).
+    - handleGameStartMessage()'s startGameLoop() call now passes a
+      function that returns the player's full object (previously just
+      the id string), since the game loop needs live speedLevel every
+      frame, not just the id.
+  File: frontend/app/game/inputHandler.js
+    - The old fixed MOVE_INTERVAL_MS constant is gone. startGameLoop()
+      now computes the interval each frame from the current player's
+      speedLevel: BASE_MOVE_INTERVAL_MS - speedLevel * SPEED_STEP_MS,
+      floored at MIN_MOVE_INTERVAL_MS. Since the server doesn't
+      independently rate-limit incoming MOVE messages, this client-side
+      send interval is what actually determines effective movement
+      speed - consistent with how the pre-existing 150ms throttle
+      already worked before Speed existed.
+  File: frontend/app/screens/gameScreen.js
+    - createTiles()/createTile() now also look up and render a power-up
+      sprite per tile (powerup-bombs.png / powerup-flames.png /
+      powerup-speed.png from Styles/public/, matching the
+      POWER_UP_TYPE string values directly).
+    - createLivesHud() extended to also show each player's current
+      bombs/flames/speed levels, so effects are visible without
+      opening devtools.
+  File: Styles/styles.css
+    - Added .power-up (same absolute-centered-overlay pattern as
+      .bomb, sized slightly smaller).
+
+Why this approach:
+  - Bombs/Flames effects needed no new enforcement code at all -
+    handlePlaceBomb() already read player.maxBombs and player.flameRange
+    directly when placing/sizing a bomb, so incrementing those fields
+    on pickup is the entire effect. Speed is different because nothing
+    server-side currently paces move frequency; the interval is
+    reduced client-side instead, matching the existing architecture
+    rather than introducing a new server-side rate limiter for this.
+  - Splicing the power-up out of state.powerUps at collection time
+    (rather than, say, marking it "collected") is what makes "a power-up
+    must disappear once collected so a second player can't also
+    collect it" true without any extra bookkeeping - a player who
+    reaches an already-spliced tile just finds nothing there.
+
+Verified (live server + real ws clients):
+  - Moved a player into a destructible block, bombed it, and confirmed
+    power-up-spawned fired with a valid type/position when the roll
+    hit (observed "bombs" and "flames" spawns across test runs at
+    roughly the expected ~30% rate).
+  - Navigated onto a spawned "bombs" power-up and confirmed
+    power-up-collected fired with maxBombs incremented from 1 to 2
+    while flameRange/speedLevel stayed unchanged - confirming the
+    effect is correctly isolated to the collected type.
+  - node --check on every touched file passes.
+
+Still not started: chat (Stage 4.1), FPS counter (Stage 4.2).
+
+Next up: Stage 4.1 - Chat.

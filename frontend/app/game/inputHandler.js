@@ -1,5 +1,6 @@
 import { send } from "../../network/socket.js";
 import { MSG } from "../../../shared/events.js";
+import { GAME_RULES } from "../../../shared/type.js";
 
 // tracks which keys are currently held down
 const keysHeld = {};
@@ -32,28 +33,38 @@ export function startInputListening() {
     });
 }
 
-// how many milliseconds between each move being sent to the server
-const MOVE_INTERVAL_MS = 150;
-
 let lastMoveTime = 0;
 let loopRunning = false;
 
-export function startGameLoop(getPlayerId) {
+// getPlayer must return the current player's own object (with .id and
+// .speedLevel), not just an id - Speed power-ups only shorten the
+// interval the client is allowed to send moves at, so we need the
+// live speedLevel every frame, not just once at game-start.
+export function startGameLoop(getPlayer) {
     if (loopRunning) return;
     loopRunning = true;
 
     function loop(timestamp) {
         if (!loopRunning) return;
 
+        const player = getPlayer();
+        const speedLevel = player?.speedLevel ?? 0;
+
+        const moveInterval = Math.max(
+            GAME_RULES.BASE_MOVE_INTERVAL_MS -
+                speedLevel * GAME_RULES.SPEED_STEP_MS,
+            GAME_RULES.MIN_MOVE_INTERVAL_MS,
+        );
+
         const timeSinceLastMove = timestamp - lastMoveTime;
 
-        if (timeSinceLastMove >= MOVE_INTERVAL_MS) {
+        if (timeSinceLastMove >= moveInterval) {
             const direction = getDirectionFromKeys();
 
-            if (direction) {
+            if (direction && player) {
                 send({
                     type: MSG.MOVE,
-                    playerId: getPlayerId(),
+                    playerId: player.id,
                     direction,
                 });
 
