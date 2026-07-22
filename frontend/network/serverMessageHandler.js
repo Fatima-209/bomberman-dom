@@ -22,6 +22,10 @@ export function handleServerMessage(message) {
             handlePlayerListMessage(message);
             break;
 
+        case MSG.CHAT_MESSAGE:
+            handleChatMessage(message);
+            break;
+
         case MSG.COUNTDOWN_TICK:
             handleCountdownTickMessage(message);
             break;
@@ -112,6 +116,42 @@ function handlePlayerListMessage(message) {
     });
 }
 
+function handleChatMessage(message) {
+    if (
+        typeof message.text !== "string" ||
+        typeof message.nickname !== "string"
+    ) {
+        console.warn(
+            "Chat message contained invalid data.",
+        );
+        return;
+    }
+
+    const text = message.text.trim();
+
+    if (text.length === 0) {
+        return;
+    }
+
+    const state = gameStore.getState();
+
+    const chatMessage = {
+        playerId: message.playerId,
+        nickname: message.nickname,
+        text,
+        sentAt:
+            typeof message.sentAt === "number"
+                ? message.sentAt
+                : Date.now(),
+    };
+
+    gameStore.setState({
+        chatMessages: [
+            ...state.chatMessages,
+            chatMessage,
+        ],
+    });
+}
 function handleCountdownTickMessage(message) {
     if (message.phase === "cancelled") {
         gameStore.setState({

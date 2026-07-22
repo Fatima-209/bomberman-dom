@@ -8,7 +8,7 @@ import { addClient, removeClient } from "./hub.js";
 import { getGameState } from "../state/gameState.js";
 import { handleMove } from "../handlers/moveHandler.js";
 import { handlePlaceBomb } from "../handlers/bombHandler.js";
-
+import { handleChatMessage } from "../handlers/chatHandler.js";
 const ALLOWED_ORIGINS = ["http://localhost:3000"];
 
 export function startWebSocketServer(port, httpServer) {
@@ -89,6 +89,13 @@ export function startWebSocketServer(port, httpServer) {
                     break;
                 } case MSG.PLACE_BOMB: {
                     handlePlaceBomb(playerId, getGameState());
+                    break;
+                } case MSG.CHAT_MESSAGE: {
+                    handleChatMessage(
+                        playerId,
+                        message,
+                        getGameState(),
+                    );
                     break;
                 }
                 default:
