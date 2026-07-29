@@ -668,3 +668,45 @@ Verified (live server + real ws clients):
 Still not started: chat (Stage 4.1), FPS counter (Stage 4.2).
 
 Next up: Stage 4.1 - Chat.
+
+---------------------------------------------------------------
+
+2026-07-29 — Chat UI & input bugfixes
+
+What was missing:
+  1. Chat input was squished narrow, send button was oversized.
+  2. Input and button had mismatched heights.
+  3. In Firefox, the send button would wrap to a new line.
+  4. WASD in the chat box also moved the player on the board.
+  5. Arrow keys/WASD scrolled the page once a scrollbar appeared.
+
+What changed:
+  File: Styles/styles.css
+    - .chat-input / .chat-send-button were losing to older global
+      rules (button[type="submit"], input[type="text"]) because those
+      use element+attribute selectors, which beat a single class
+      regardless of order. Added !important on the contested
+      sizing/font properties so ours always wins.
+    - Added box-sizing: border-box + matching height/line-height on
+      both, fixing the height mismatch.
+    - Added flex-wrap: nowrap on .chat-form, min-width: 0 on
+      .chat-input, flex: 0 0 auto on the button - fixes Firefox's
+      minimum input width forcing the button to wrap.
+
+  File: frontend/app/game/inputHandler.js
+    - The isTyping check only guarded bomb placement, not movement -
+      moved it to the top of keydown so it guards both.
+    - Added a focusin listener that clears keysHeld when a text field
+      gains focus, so a key held before clicking into chat doesn't
+      stay stuck "on".
+    - Added preventDefault() for arrow keys/WASD on keydown (Space
+      already had it), stopping the browser's default page-scroll.
+
+Verified:
+  - Arrow keys/WASD no longer scroll the page with a scrollbar present.
+  - Movement stops immediately when clicking into chat mid-move.
+  - WASD typed in chat doesn't move the player or place a bomb.
+  - Input/button match in height and stay on one line in Chrome + Firefox.
+  - node --check on inputHandler.js passes.
+
+Next up: FPS counter (Stage 4.2).

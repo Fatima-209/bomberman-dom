@@ -6,16 +6,43 @@ import { GAME_RULES } from "../../../shared/type.js";
 const keysHeld = {};
 
 export function startInputListening() {
-    document.addEventListener("keydown", (event) => {
+    document.addEventListener("focusin", (event) => {
         const isTyping =
             event.target instanceof HTMLInputElement ||
             event.target instanceof HTMLTextAreaElement;
 
-        if (
-            !isTyping &&
-            event.code === "Space" &&
-            !event.repeat
-        ) {
+        if (isTyping) {
+            for (const key in keysHeld) {
+                keysHeld[key] = false;
+            }
+        }
+    });
+
+    document.addEventListener("keydown", (event) => {
+    const isTyping =
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement;
+
+    if (isTyping) {
+        return;
+    }
+
+    const isGameKey =
+        event.code === "Space" ||
+        event.key === "ArrowUp" ||
+        event.key === "ArrowDown" ||
+        event.key === "ArrowLeft" ||
+        event.key === "ArrowRight" ||
+        event.key === "w" ||
+        event.key === "a" ||
+        event.key === "s" ||
+        event.key === "d";
+
+    if (isGameKey) {
+        event.preventDefault();
+    }
+
+        if (event.code === "Space" && !event.repeat) {
             event.preventDefault();
 
             send({

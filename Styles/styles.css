@@ -435,15 +435,26 @@ input[type="text"]:disabled { opacity: 0.5; }
 
 .chat-form {
   display: flex;
+  flex-wrap: nowrap;
   gap: 8px;
   padding-top: 14px;
   border-top: 1px solid rgba(216, 178, 76, 0.35);
 }
 
 .chat-input {
-  flex: 1;
-  min-width: 0;
-  padding: 10px 12px;
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  width: auto !important;
+  box-sizing: border-box !important;
+  height: 42px !important;
+  padding: 0 12px !important;
+
+  font-family: var(--font-body) !important;
+  font-style: normal !important;
+  font-size: 14px !important;
+  letter-spacing: normal !important;
+  line-height: 42px !important;
+  text-align: left !important;
 
   color: var(--ivory);
   background: rgba(5, 4, 13, 0.65);
@@ -465,7 +476,17 @@ input[type="text"]:disabled { opacity: 0.5; }
 }
 
 .chat-send-button {
-  padding: 10px 14px;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  box-sizing: border-box !important;
+  height: 42px !important;
+  padding: 0 16px !important;
+
+  font-family: var(--font-body) !important;
+  font-style: normal !important;
+  font-size: 14px !important;
+  letter-spacing: normal !important;
+  line-height: 40px !important;
 
   color: var(--night);
   background: var(--gold);
@@ -481,6 +502,7 @@ input[type="text"]:disabled { opacity: 0.5; }
 .chat-send-button:active {
   transform: translateY(1px);
 }
+
 .game-board {
   display: grid;
   grid-template-columns: repeat(13, 48px);

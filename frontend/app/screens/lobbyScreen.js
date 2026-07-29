@@ -26,7 +26,7 @@ export function createLobbyScreen(state) {
             ),
 
             createElement("div", { className: "ornament-divider" }),
-
+  
             createElement(
                 "p",
                 {},
