@@ -710,3 +710,45 @@ Verified:
   - node --check on inputHandler.js passes.
 
 Next up: FPS counter (Stage 4.2).
+
+---------------------------------------------------------------
+
+2026-07-30 — FPS counter + Game Over rendering bug
+
+What was missing:
+  1. No FPS counter (Stage 4.2).
+  2. After a match ended, the Game Over card rendered on top of the
+     old board/chat instead of replacing them.
+
+What changed:
+  - New: frontend/app/game/fpsCounter.js - own rAF loop, measures
+    real frames, pushes fps into gameStore once/sec.
+  - gameStore.js: added fps: 0 to initial state.
+  - main.js: starts the FPS loop on boot.
+  - gameScreen.js: added createFpsCounter(state), top-right,
+    color-coded by value.
+  - styles.css: added .fps-counter (position: fixed, top-right).
+  - render.js: patch()'s children loop removed multiple leftover
+    children by index, but removing one shifts later indices, so
+    later removals got silently skipped. Fixed by diffing shared
+    indices in original order, then removing any leftover old
+    children from the tail (not the front), so already-handled
+    indices never shift.
+
+Why this approach:
+  - A full loop reversal fixed it too but had side effects on chat/
+    movement elsewhere - switched to a narrower fix that only
+    changes behavior for the one broken case, leaving everything
+    else identical to the original code.
+  - FPS counter is not clamped to 60 - brief says "at least 60fps",
+    a floor not a ceiling; brief spikes above 60 are real frames,
+    not a bug.
+
+Verified:
+  - Chat + movement work as before.
+  - Game Over screen no longer leaves old board/chat behind.
+  - FPS counter drops under CPU throttle / backgrounded tab and
+    recovers - confirms real measurement, not hardcoded.
+
+Next up: WebSocket refresh/game-over cleanup, then exit button +
+"You lost" screen.
