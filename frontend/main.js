@@ -12,6 +12,7 @@ import { handleServerMessage } from "./network/serverMessageHandler.js";
 import { gameStore } from "./state/gameStore.js";
 import { MSG } from "../shared/events.js";
 import { startInputListening } from "./app/game/inputHandler.js";
+import { startFpsCounter } from "./app/game/fpsCounter.js";
 
 //TEMPORARY — for manually testing state changes from devtools console.
 //remove this line before committing.
@@ -96,6 +97,7 @@ function renderApp() {
 }
 
 startInputListening();
+startFpsCounter();
 
 gameStore.subscribe(renderApp);
 

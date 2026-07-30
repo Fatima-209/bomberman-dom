@@ -600,6 +600,34 @@ input[type="text"]:disabled { opacity: 0.5; }
   text-shadow: 0 0 24px rgba(52,208,196,0.5);
 }
 
+/* ---------------- FPS Counter ---------------- */
+.fps-counter {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
+
+  padding: 6px 10px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  letter-spacing: 0.5px;
+
+  background: rgba(5, 4, 13, 0.7);
+  border: 1px solid var(--gold-soft);
+}
+
+.fps-counter.fps-good {
+  color: var(--teal-bright);
+}
+
+.fps-counter.fps-warn {
+  color: var(--gold);
+}
+
+.fps-counter.fps-bad {
+  color: var(--magenta);
+}
+
 @media (max-width: 1050px) {
   .game-layout {
     flex-direction: column;
@@ -617,3 +645,5 @@ input[type="text"]:disabled { opacity: 0.5; }
   h1 { font-size: 52px; }
   .lobby-card h1 { font-size: 40px; }
 }
+
+

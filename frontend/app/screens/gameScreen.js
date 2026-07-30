@@ -15,6 +15,7 @@ export function createGameScreen(state) {
     { className: "game-screen" },
 
     createLivesHud(state),
+    createFpsCounter(state),
 
     createElement(
         "div",
@@ -71,6 +72,22 @@ function createLivesHud(state) {
                     `speed ${player.speedLevel ?? 0})`,
             ),
         ),
+    );
+}
+
+function createFpsCounter(state) {
+    const fps = state.fps ?? 0;
+
+    // color hints at a glance whether frames are actually dropping
+    const statusClass =
+        fps >= 55 ? "fps-good" :
+        fps >= 30 ? "fps-warn" :
+        "fps-bad";
+
+    return createElement(
+        "div",
+        { className: `fps-counter ${statusClass}` },
+        `${fps} FPS`,
     );
 }
 

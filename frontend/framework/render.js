@@ -70,10 +70,40 @@ function patch(parent, oldNode, newNode, index) {
 
     const oldChildren = oldNode.children || [];
     const newChildren = newNode.children || [];
-    const longestLength = Math.max(oldChildren.length, newChildren.length);
 
-    for (let i = 0; i < longestLength; i++) {
+    // first, diff whatever positions exist in BOTH lists, in normal
+    // front-to-back order - exactly like before. Nothing gets removed
+    // in this part, so there's no index-shifting to worry about here.
+    const commonLength = Math.min(oldChildren.length, newChildren.length);
+
+    for (let i = 0; i < commonLength; i++) {
         patch(existingElement, oldChildren[i], newChildren[i], i);
+    }
+
+    // if the new list is LONGER, the extra new children just need to be
+    // appended at the end - appendChild always adds to the end, so this
+    // is safe no matter what.
+    if (newChildren.length > oldChildren.length) {
+        for (let i = commonLength; i < newChildren.length; i++) {
+            existingElement.appendChild(createRealDomeElement(newChildren[i]));
+        }
+    }
+
+    // if the old list is LONGER, the extra old children need to be
+    // removed. Take them from the END, one at a time - after each
+    // removal, the next "extra" child is always still sitting at
+    // position newChildren.length, because we're always removing from
+    // the tail. This is what fixes the Game Over screen bug, where
+    // multiple leftover children (the old board, chat panel, etc.)
+    // were being left behind because removing them one by one from
+    // the front shifted everyone else's position mid-loop.
+    if (oldChildren.length > newChildren.length) {
+        for (let i = oldChildren.length - 1; i >= newChildren.length; i--) {
+            const childToRemove = existingElement.childNodes[newChildren.length];
+            if (childToRemove) {
+                existingElement.removeChild(childToRemove);
+            }
+        }
     }
 }
 

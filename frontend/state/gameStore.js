@@ -16,9 +16,9 @@ const initialState = {
     waitSecondsRemaining: null,
     countdownSecondsRemaining: null,
 
-  map: null,
-bombs: [],
-explosions: [],
+    map: null,
+    bombs: [],
+    explosions: [],
     powerUps: [],
 
     chatMessages: [],
@@ -26,6 +26,8 @@ explosions: [],
     winnerId: null,
     winnerNickname: null,
     winReason: null,
+    
+    fps: 0,
 };
 
 export const gameStore = createStore(initialState);
