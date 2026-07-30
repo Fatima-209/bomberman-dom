@@ -1,6 +1,6 @@
 import { GAME_PHASE } from "../../../shared/gameState.js";
 
-import { getGameState } from "../state/gameState.js";
+import { getGameState, resetGameState } from "../state/gameState.js";
 import { broadcastPlayerList } from "./joingameHandler.js";
 import { onPlayerLeft } from "./lobbyTimerHandler.js";
 import { checkWinCondition } from "./winConditionHandler.js";
@@ -14,11 +14,6 @@ export function handleDisconnect(playerId) {
         return;
     }
 
-    // game already ended, nothing left to update
-    if (state.phase === GAME_PHASE.GAME_OVER) {
-        return;
-    }
-
     const isLobbyPhase =
         state.phase === GAME_PHASE.LOBBY ||
         state.phase === GAME_PHASE.COUNTDOWN;
@@ -28,14 +23,35 @@ export function handleDisconnect(playerId) {
 
         onPlayerLeft(state);
         broadcastPlayerList(state);
-        return;
+    } else if (state.phase === GAME_PHASE.GAME_OVER) {
+        // the match is already decided - there's no win-condition left
+        // to check, just remove this player so a finished game doesn't
+        // keep them (and the server) stuck forever.
+        delete state.players[playerId];
+
+        broadcastPlayerList(state);
+    } else {
+        // mid-game: keep the player entry so win-condition checks can
+        // still see who's connected/out, just mark them disconnected
+        player.connected = false;
+
+        broadcastPlayerList(state);
+
+        checkWinCondition(state, "disconnect");
     }
 
-    // mid-game: keep the player entry so win-condition checks can still
-    // see who's connected/out, just mark them disconnected
-    player.connected = false;
+    // check the MATCH itself, not the whole server - other open tabs
+    // that never joined (still on the nickname screen) shouldn't block
+    // a reset. Only look at players who were actually part of this
+    // game: if none of them are still connected, there's nobody left
+    // for this match to matter to, so start a fresh lobby.
+    if (state.phase !== GAME_PHASE.LOBBY) {
+        const anyoneStillConnected = Object.values(state.players).some(
+            (remainingPlayer) => remainingPlayer.connected,
+        );
 
-    broadcastPlayerList(state);
-
-    checkWinCondition(state, "disconnect");
+        if (!anyoneStillConnected) {
+            resetGameState();
+        }
+    }
 }

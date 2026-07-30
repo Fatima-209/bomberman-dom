@@ -10,6 +10,16 @@ export function createGameScreen(state) {
         );
     }
 
+    const currentPlayer = getCurrentPlayer(state);
+
+    // the match is still running for everyone else, but this player is
+    // out of lives - stop showing them the live board (no more
+    // spectating) and give them a way back to the nickname screen
+    // instead.
+    if (currentPlayer?.isOut) {
+        return createYouLostScreen();
+    }
+
     return createElement(
     "main",
     { className: "game-screen" },
@@ -33,9 +43,21 @@ export function createGameScreen(state) {
 }
 
 export function createGameOverScreen(state) {
-    const message = state.winnerNickname
-        ? `${state.winnerNickname} wins!`
-        : "No winner - draw.";
+    const didCurrentPlayerWin =
+        state.winnerId !== null &&
+        state.winnerId === state.playerId;
+
+    const title = !state.winnerId
+        ? "Game Over"
+        : didCurrentPlayerWin
+          ? "You Won!"
+          : "Game Over";
+
+    const message = !state.winnerId
+        ? "No winner - draw."
+        : didCurrentPlayerWin
+          ? "Congratulations!"
+          : `${state.winnerNickname} wins. You lost.`;
 
     return createElement(
         "main",
@@ -47,11 +69,51 @@ export function createGameOverScreen(state) {
             createElement("span", { className: "corner tr" }),
             createElement("span", { className: "corner bl" }),
             createElement("span", { className: "corner br" }),
-            createElement("h1", {}, "Game Over"),
+            createElement("h1", {}, title),
             createElement("div", { className: "ornament-divider" }),
             createElement("p", {}, message),
+            createHomeButton(),
         ),
     );
+}
+
+// full-screen takeover shown the moment a player runs out of lives,
+// while the match is still going for everyone else.
+function createYouLostScreen() {
+    return createElement(
+        "main",
+        { className: "game-screen" },
+        createElement(
+            "section",
+            { className: "lobby-card leaded" },
+            createElement("span", { className: "corner tl" }),
+            createElement("span", { className: "corner tr" }),
+            createElement("span", { className: "corner bl" }),
+            createElement("span", { className: "corner br" }),
+            createElement("h1", {}, "You Lost"),
+            createElement("div", { className: "ornament-divider" }),
+            createElement("p", {}, "Better luck next time."),
+            createHomeButton(),
+        ),
+    );
+}
+
+function createHomeButton() {
+    return createElement(
+        "button",
+        {
+            className: "btn",
+            type: "button",
+            onClick: () => window.location.reload(),
+        },
+        "Return to Home",
+    );
+}
+
+function getCurrentPlayer(state) {
+    return state.players.find(
+        (player) => player.id === state.playerId,
+    ) || null;
 }
 
 function createLivesHud(state) {
@@ -190,6 +252,7 @@ function createTiles(state) {
     const bombPositionMap = buildBombPositionMap(state.bombs);
     const explosionPositionMap = buildExplosionPositionMap(state.explosions);
     const powerUpPositionMap = buildPowerUpPositionMap(state.powerUps);
+    const hitPlayerIdSet = new Set(state.hitPlayerIds || []);
 
     for (let row = 0; row < GAME_RULES.MAP_ROWS; row++) {
         for (let col = 0; col < GAME_RULES.MAP_COLS; col++) {
@@ -199,6 +262,11 @@ function createTiles(state) {
             const bomb = bombPositionMap[positionKey];
             const hasExplosion = explosionPositionMap[positionKey] === true;
             const powerUp = powerUpPositionMap[positionKey];
+
+            const isPlayerHit =
+                playerIndex !== undefined &&
+                hitPlayerIdSet.has(state.players[playerIndex]?.id);
+
             tiles.push(
                 createTile(
                     tileType,
@@ -208,6 +276,7 @@ function createTiles(state) {
                     bomb,
                     hasExplosion,
                     powerUp,
+                    isPlayerHit,
                 ),
             );
         }
@@ -224,6 +293,7 @@ function createTile(
     bomb,
     hasExplosion,
     powerUp,
+    isPlayerHit,
 ) {
     const children = [];
 
@@ -268,7 +338,9 @@ function createTile(
             createElement(
                 "div",
                 {
-                    className: "player player-" + (playerIndex + 1),
+                    className:
+                        "player player-" + (playerIndex + 1) +
+                        (isPlayerHit ? " hit" : ""),
                     style: "background-image: url('../Styles/public/" + PLAYER_IMAGES[playerIndex] + "')",
                 },
             ),

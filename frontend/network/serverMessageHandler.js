@@ -178,6 +178,16 @@ function handleCountdownTickMessage(message) {
 }
 
 function handleGameStartMessage(message) {
+    // this broadcast reaches every open tab, including ones still
+    // sitting on the nickname screen that never actually joined - only
+    // switch this client to the game screen if it's actually a player
+    // in this match, not just a connected socket.
+    const currentPlayerId = gameStore.getState().playerId;
+
+    if (!currentPlayerId) {
+        return;
+    }
+
     gameStore.setState({
         phase: GAME_PHASE.PLAYING,
         waitSecondsRemaining: null,
@@ -188,9 +198,6 @@ function handleGameStartMessage(message) {
             : [],
     });
 
-    // start the game loop, passes a function so the loop always reads
-    // the current player object (including live speedLevel) from state
-    // rather than a stale value captured once at game-start
     startGameLoop(() => {
         const current = gameStore.getState();
         return current.players.find(
@@ -386,6 +393,40 @@ function handlePlayerHitMessage(message) {
     updatePlayer(message.playerId, {
         lives: message.livesRemaining,
     });
+
+    flashPlayerHit(message.playerId);
+}
+
+// briefly marks a player as "just hit" so the board can show a blink
+// animation, then clears the flag once the animation has had time to
+// play - this mirrors the same pattern already used for explosions
+// (removeExplosionAfterDuration), just for a shorter duration.
+function flashPlayerHit(playerId) {
+    const state = gameStore.getState();
+
+    gameStore.setState({
+        hitPlayerIds: [...state.hitPlayerIds, playerId],
+    });
+
+    const startTime = performance.now();
+    const duration = 2000;
+
+    function checkTime(currentTime) {
+        if (currentTime - startTime < duration) {
+            requestAnimationFrame(checkTime);
+            return;
+        }
+
+        const current = gameStore.getState();
+
+        gameStore.setState({
+            hitPlayerIds: current.hitPlayerIds.filter(
+                (id) => id !== playerId,
+            ),
+        });
+    }
+
+    requestAnimationFrame(checkTime);
 }
 
 function handlePlayerOutMessage(message) {
@@ -408,6 +449,12 @@ function updatePlayer(playerId, changes) {
 }
 
 function handleGameOverMessage(message) {
+    const currentPlayerId = gameStore.getState().playerId;
+
+    if (!currentPlayerId) {
+        return;
+    }
+
     gameStore.setState({
         phase: GAME_PHASE.GAME_OVER,
         winnerId: message.winnerId,

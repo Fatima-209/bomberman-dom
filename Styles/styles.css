@@ -320,6 +320,7 @@ input[type="text"]:disabled { opacity: 0.5; }
   transition: background 0.2s ease;
 }
 .player-list-item:last-child { border-bottom: none; }
+
 .player-list-item.current-player {
   color: var(--teal-bright);
 }
@@ -330,6 +331,21 @@ input[type="text"]:disabled { opacity: 0.5; }
   flex-shrink: 0;
   background: var(--gold);
   transform: rotate(45deg);
+}
+
+@keyframes player-hit-blink {
+  0%, 100% {
+    opacity: 1;
+    filter: brightness(1);
+  }
+  25%, 75% {
+    opacity: 0.25;
+    filter: brightness(2);
+  }
+}
+
+.player.hit {
+  animation: player-hit-blink 2s ease-in-out;
 }
 
 .lobby-message {

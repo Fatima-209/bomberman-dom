@@ -21,12 +21,14 @@ const initialState = {
     explosions: [],
     powerUps: [],
 
+    hitPlayerIds: [],
+
     chatMessages: [],
 
     winnerId: null,
     winnerNickname: null,
     winReason: null,
-    
+
     fps: 0,
 };
 

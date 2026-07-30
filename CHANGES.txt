@@ -752,3 +752,32 @@ Verified:
 
 Next up: WebSocket refresh/game-over cleanup, then exit button +
 "You lost" screen.
+
+---------------------------------------------------------------
+
+2026-07-30 — Non-joined tabs bug, disconnect/reset fix, hit
+animation, exit + win/lose screens
+
+What was missing:
+  1. Tabs still on the nickname screen (never joined) got pulled into
+     the game screen when a match started elsewhere.
+  2. Refreshing after a finished match still said "game already
+     started" - previous reset check counted ALL open tabs instead
+     of just the players who were actually in that match.
+  3. No visual feedback when a player got hit by an explosion.
+  4. A player who died mid-match kept seeing the live board with no
+     way to leave; no distinction between winning/losing on the
+     final screen; no way back to the nickname screen at all.
+
+What changed:
+  File: frontend/network/serverMessageHandler.js
+    - handleGameStartMessage / handleGameOverMessage now check
+      state.playerId first and return early if it's not set - only
+      tabs that actually joined react to these broadcasts now.
+    - handlePlayerHitMessage now also calls a new flashPlayerHit(),
+      which adds the player's id to hitPlayerIds for ~1s (same
+      timing pattern as removeExplosionAfterDuration) then removes it.
+
+  File:
+
+  
