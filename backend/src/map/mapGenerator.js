@@ -59,6 +59,9 @@ function clearSpawnZones(grid) {
         grid[corner.row][corner.col] = TILE_TYPE.EMPTY;
         grid[corner.row + rowStep][corner.col] = TILE_TYPE.EMPTY;
         grid[corner.row][corner.col + colStep] = TILE_TYPE.EMPTY;
+        //make sure player can plade a bomb initially and have enough space to move around not die from its own blast (enough empty tiles)
+        grid[corner.row + rowStep * 2][corner.col] = TILE_TYPE.EMPTY;
+grid[corner.row][corner.col + colStep * 2] = TILE_TYPE.EMPTY;
     }
 }
 
@@ -71,6 +74,10 @@ function isSafeTile(row, col) {
             { row: corner.row, col: corner.col },
             { row: corner.row + rowStep, col: corner.col },
             { row: corner.row, col: corner.col + colStep },
+                { row: corner.row + rowStep * 2, col: corner.col },
+                    { row: corner.row, col: corner.col + colStep * 2 },
+
+
         ];
 
         for (const tile of safeTiles) {
