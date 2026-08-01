@@ -1,4 +1,5 @@
 import { createElement } from "../../framework/index.js";
+import { createChatPanel } from "./chatPanel.js";
 import { GAME_RULES } from "../../../shared/type.js";
 
 export function createLobbyScreen(state) {
@@ -76,8 +77,10 @@ export function createLobbyScreen(state) {
                     className: "lobby-message",
                 },
                 lobbyMessage(state),
-            ),
+                      ),
         ),
+
+        createChatPanel(state, "Waiting Room Chat"),
     );
 }
 

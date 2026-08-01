@@ -276,12 +276,19 @@ input[type="text"]:disabled { opacity: 0.5; }
   align-items: center;
   justify-content: center;
   padding: 48px 20px;
+    gap: 20px;
+  flex-wrap: wrap;
 }
 .lobby-card {
   width: 460px;
   max-width: 100%;
   text-align: center;
 }
+.lobby-screen .chat-panel {
+  width: 300px;
+  height: 460px;
+}
+
 .lobby-card h1 { font-size: 42px; line-height: 1.7; margin-bottom: 12px; }
 .lobby-card > p { margin-bottom: 6px; }
 
@@ -652,6 +659,10 @@ input[type="text"]:disabled { opacity: 0.5; }
 
   .chat-panel {
     width: min(100%, 674px);
+    height: 300px;
+  }
+    .lobby-screen .chat-panel {
+    width: min(100%, 460px);
     height: 300px;
   }
 }

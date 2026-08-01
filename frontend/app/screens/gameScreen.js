@@ -1,5 +1,5 @@
 import { createElement } from "../../framework/index.js";
-import { sendChatMessage } from "../../network/socket.js";
+import { createChatPanel } from "./chatPanel.js";
 import { TILE_TYPE, GAME_RULES } from "../../../shared/type.js";
 
 
@@ -153,98 +153,98 @@ function createFpsCounter(state) {
     );
 }
 
-function createChatPanel(state) {
-    const messages = Array.isArray(state.chatMessages)
-        ? state.chatMessages.slice(-50)
-        : [];
+// function createChatPanel(state) {
+//     const messages = Array.isArray(state.chatMessages)
+//         ? state.chatMessages.slice(-50)
+//         : [];
 
-    return createElement(
-        "section",
-        { className: "chat-panel" },
+//     return createElement(
+//         "section",
+//         { className: "chat-panel" },
 
-        createElement(
-            "h2",
-            { className: "chat-title" },
-            "Game Chat",
-        ),
+//         createElement(
+//             "h2",
+//             { className: "chat-title" },
+//             "Game Chat",
+//         ),
 
-        createElement(
-            "div",
-            { className: "chat-messages" },
+//         createElement(
+//             "div",
+//             { className: "chat-messages" },
 
-            messages.length === 0
-                ? createElement(
-                      "p",
-                      { className: "chat-empty" },
-                      "No messages yet.",
-                  )
-                : messages.map(createChatMessage),
-        ),
+//             messages.length === 0
+//                 ? createElement(
+//                       "p",
+//                       { className: "chat-empty" },
+//                       "No messages yet.",
+//                   )
+//                 : messages.map(createChatMessage),
+//         ),
 
-        createElement(
-            "form",
-            {
-                className: "chat-form",
+//         createElement(
+//             "form",
+//             {
+//                 className: "chat-form",
 
-                onSubmit: (event) => {
-                    event.preventDefault();
+//                 onSubmit: (event) => {
+//                     event.preventDefault();
 
-                    const form = event.currentTarget;
-                    const input = form.elements.chatMessage;
-                    const text = input.value.trim();
+//                     const form = event.currentTarget;
+//                     const input = form.elements.chatMessage;
+//                     const text = input.value.trim();
 
-                    if (text.length === 0) {
-                        return;
-                    }
+//                     if (text.length === 0) {
+//                         return;
+//                     }
 
-                    sendChatMessage(text);
-                    input.value = "";
-                    input.focus();
-                },
-            },
+//                     sendChatMessage(text);
+//                     input.value = "";
+//                     input.focus();
+//                 },
+//             },
 
-            createElement(
-                "input",
-                {
-                    className: "chat-input",
-                    name: "chatMessage",
-                    type: "text",
-                    maxlength: 200,
-                    autocomplete: "off",
-                    placeholder: "Type a message...",
-                },
-            ),
+//             createElement(
+//                 "input",
+//                 {
+//                     className: "chat-input",
+//                     name: "chatMessage",
+//                     type: "text",
+//                     maxlength: 200,
+//                     autocomplete: "off",
+//                     placeholder: "Type a message...",
+//                 },
+//             ),
 
-            createElement(
-                "button",
-                {
-                    className: "chat-send-button",
-                    type: "submit",
-                },
-                "Send",
-            ),
-        ),
-    );
-}
+//             createElement(
+//                 "button",
+//                 {
+//                     className: "chat-send-button",
+//                     type: "submit",
+//                 },
+//                 "Send",
+//             ),
+//         ),
+//     );
+// }
 
-function createChatMessage(message) {
-    return createElement(
-        "p",
-        { className: "chat-message" },
+// function createChatMessage(message) {
+//     return createElement(
+//         "p",
+//         { className: "chat-message" },
 
-        createElement(
-            "strong",
-            { className: "chat-nickname" },
-            `${message.nickname}: `,
-        ),
+//         createElement(
+//             "strong",
+//             { className: "chat-nickname" },
+//             `${message.nickname}: `,
+//         ),
 
-        createElement(
-            "span",
-            { className: "chat-text" },
-            message.text,
-        ),
-    );
-}
+//         createElement(
+//             "span",
+//             { className: "chat-text" },
+//             message.text,
+//         ),
+//     );
+// }
 
 function createTiles(state) {
     const tiles = [];
