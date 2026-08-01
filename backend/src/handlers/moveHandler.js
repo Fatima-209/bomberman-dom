@@ -89,10 +89,10 @@ function isValidMove(row, col, state) {
     if (tile === TILE_TYPE.WALL)  return false;
     if (tile === TILE_TYPE.BLOCK) return false;
 
-    // another player is on that tile
-    const tileOccupied = Object.values(state.players).some(
-        (p) => !p.isOut && p.position.row === row && p.position.col === col
-    );
+    // another player is on that tile AND theyre connected (so disconnected players arent blocking tiles)
+const tileOccupied = Object.values(state.players).some(
+    (p) => p.connected && !p.isOut && p.position.row === row &&p.position.col === col
+);
     if (tileOccupied) return false;
 
     // Stage 3.1 will add: if tile is TILE_TYPE.BOMB return false
