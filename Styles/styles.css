@@ -241,7 +241,7 @@ input[type="text"]:disabled { opacity: 0.5; }
   padding: 48px 20px;
 }
 .nickname-card {
-  width: 440px;
+  width: 460px;
   max-width: 100%;
   text-align: center;
 }
