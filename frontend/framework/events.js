@@ -31,3 +31,11 @@ export function isEventAttr(key){
 export function getEventName(propName) {
     return propName.slice(2).toLowerCase();
 }
+
+// for listeners that aren't tied to one specific rendered element (e.g.
+// global keyboard input that has to keep working no matter what's
+// focused) - keeps addEventListener() itself confined to the framework,
+// the same way attachEventsToElement() does for per-element on* props.
+export function listenGlobal(target, eventName, handler) {
+    target.addEventListener(eventName, handler);
+}

@@ -1,12 +1,13 @@
 import { send } from "../../network/socket.js";
 import { MSG } from "../../../shared/events.js";
 import { GAME_RULES } from "../../../shared/type.js";
+import { listenGlobal } from "../../framework/index.js";
 
 // tracks which keys are currently held down
 const keysHeld = {};
 
 export function startInputListening() {
-    document.addEventListener("focusin", (event) => {
+    listenGlobal(document, "focusin", (event) => {
         const isTyping =
             event.target instanceof HTMLInputElement ||
             event.target instanceof HTMLTextAreaElement;
@@ -18,7 +19,7 @@ export function startInputListening() {
         }
     });
 
-    document.addEventListener("keydown", (event) => {
+    listenGlobal(document, "keydown", (event) => {
     const isTyping =
         event.target instanceof HTMLInputElement ||
         event.target instanceof HTMLTextAreaElement;
@@ -55,7 +56,7 @@ export function startInputListening() {
         keysHeld[event.key] = true;
     });
 
-    document.addEventListener("keyup", (event) => {
+    listenGlobal(document, "keyup", (event) => {
         keysHeld[event.key] = false;
     });
 }
