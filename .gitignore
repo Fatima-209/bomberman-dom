@@ -11,6 +11,10 @@ node_modules/
 .env.*
 !.env.example
 
+# Local Claude configuration and project notes
+.claude/
+CHANGES.txt
+
 # Logs and debug output
 *.log
 npm-debug.log*
@@ -23,4 +27,3 @@ yarn-error.log*
 Thumbs.db
 *.pem
 *.tsbuildinfo
-.claude
