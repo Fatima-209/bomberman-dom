@@ -3,11 +3,6 @@
 A real-time multiplayer Bomberman game built with vanilla JavaScript, WebSockets, and a custom DOM rendering framework. Join a shared lobby, chat while you wait, then navigate a generated arena and place bombs to outlast your opponents.
 
 ## Game visuals
-
-### Arena background
-
-![Bomberman game background artwork](Styles/public/game-background.png)
-
 ### In-game action
 
 ![Animated bomb explosion](Styles/public/explosion.gif)
