@@ -123,10 +123,7 @@ function explodeBomb(bombId, state) {
     checkWinCondition(state, "last-standing");
 }
 
-// A player standing on a blast tile loses exactly one life for this
-// explosion, even if multiple overlapping tiles/bombs would otherwise
-// hit them - we check "is this player on ANY blast tile" once per
-// player, not once per tile.
+
 function applyExplosionDamage(explosionTiles, bomb, state) {
     const blastTiles = new Set(
         explosionTiles.map(

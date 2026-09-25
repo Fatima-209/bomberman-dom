@@ -10,10 +10,6 @@ let countdownInterval = null;
 
 // Call after a player has been added to state.players.
 export function onPlayerJoined(state) {
-    // Countdown/game already running or finished - joins that reach this
-    // point are already blocked upstream by the phase !== LOBBY gate in
-    // joingameHandler.js, but the check is repeated here as the guard
-    // that prevents a double countdown on the 20s/4th-player race.
     if (state.phase !== GAME_PHASE.LOBBY) {
         return;
     }
